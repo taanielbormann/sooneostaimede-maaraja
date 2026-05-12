@@ -17,7 +17,6 @@ try:
 
     # --- KATEGOORIA: KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
-        st.write("Vali eose kuju:")
         if 'shape_bilateral' in df.columns:
             st.image("pildid/bilateral.png", width=150)
             if st.checkbox("Bilateraalne", key="chk_bilateral"):
@@ -38,18 +37,12 @@ try:
     # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         pind_valikud = {
-            "Ogaline (echinate)": "surf_echinate",
-            "Peeneogaline (microechinate)": "surf_microechinate",
-            "Tüükaline (verrucate)": "surf_verrucate",
-            "Lohuline (lophate)": "surf_lophate",
-            "Harjaline (cristate)": "surf_cristate",
-            "Retikulaarne (reticulate)": "surf_reticulate",
-            "Kurruline (rugulate)": "surf_rugulate",
-            "Konksuline (hamulate)": "surf_hamulate",
-            "Granulaarne (granulate)": "surf_granulate",
-            "Peenkare (scabrate)": "surf_scabrate",
-            "Sile (psilate)": "surf_psilate",
-            "Auguline (foveolate)": "surf_foveolate",
+            "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
+            "Harjaline (cristate)": "surf_cristate", "Retikulaarne (reticulate)": "surf_reticulate",
+            "Kurruline (rugulate)": "surf_rugulate", "Konksuline (hamulate)": "surf_hamulate",
+            "Granulaarne (granulate)": "surf_granulate", "Peenkare (scabrate)": "surf_scabrate",
+            "Sile (psilate)": "surf_psilate", "Auguline (foveolate)": "surf_foveolate",
             "Voldiline (folded)": "surf_folded"
         }
         for silt, veerg in pind_valikud.items():
@@ -79,12 +72,14 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
+        # Funktsioon nime vormistamiseks (kaldkiri ladina nimele)
         def vormista_kaldkiri(nimi):
             if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 parts = nimi.split("(", 1)
                 return f"{parts[0]} (*{parts[1].replace(')', '').strip()}*)"
             return nimi
 
+        # Teeme tabeli andmed valmis
         df_display = df.copy()
         if 'species' in df_display.columns:
             df_display['Liiginimi (ladina k)'] = df_display['species'].apply(vormista_kaldkiri)
@@ -92,24 +87,26 @@ try:
         soovitud = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in soovitud if v in df_display.columns]
         
-        # Tabel
+        # 1. Samm: Näitame tabelit
         st.table(df_display[olemasolevad])
 
-        # --- FOTOGALERII ---
-        if 'image_url' in df.columns:
-            # Filtreerime välja ainult need read, kus pildi tee on kirjas
-            df_piltidega = df[df['image_url'].notna() & (df['image_url'] != "")]
-            
-            if not df_piltidega.empty:
-                st.write("### 📸 Eoste fotod")
-                # Kuvame pildid ridades, 3 tükki reas
-                cols = st.columns(3)
-                for i, (idx, row) in enumerate(df_piltidega.iterrows()):
-                    with cols[i % 3]:
-                        try:
-                            st.image(row['image_url'], caption=row['species'], use_container_width=True)
-                        except:
-                            st.error(f"Pilti ei leitud: {row['image_url']}")
+        # 2. Samm: Detailne vaade piltidega (popover või expander)
+        st.write("### 🔍 Detailne vaade ja fotod")
+        st.info("Kliki liigi nimel, et näha eose fotot ja lisainfot.")
+
+        for _, row in df.iterrows():
+            # Iga liigi jaoks loome "popover" nupu
+            with st.popover(f"📖 {row['species']}"):
+                st.write(f"**Perekond:** {row.get('genus', 'teadmata')}")
+                st.write(f"**Sugukond:** {row.get('family', 'teadmata')}")
+                
+                if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
+                    try:
+                        st.image(row['image_url'], caption=f"Eose foto: {row['species']}", use_container_width=True)
+                    except:
+                        st.warning("Pilti ei leitud failiteelt.")
+                else:
+                    st.write("Selle liigi kohta fotot veel pole.")
 
 except Exception as e:
     st.error(f"Viga: {e}")
