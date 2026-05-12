@@ -17,7 +17,6 @@ try:
 
     # --- KATEGOORIA: KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
-        st.write("Vali eose kuju:")
         if 'shape_bilateral' in df.columns:
             st.image("pildid/bilateral.png", width=150)
             if st.checkbox("Bilateraalne", key="chk_bilateral"):
@@ -73,38 +72,42 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Vormistame nime kaldkirja jaoks
         def vormista_ladina(nimi):
             if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 eesti, ladina = nimi.split("(", 1)
                 return eesti.strip(), ladina.replace(")", "").strip()
             return nimi, ""
 
-        # Kuvame iga liigi eraldi lahtikäivas paneelis
+        # Kuvame iga liigi detailse vaate
         for _, row in df.iterrows():
             eesti_nimi, ladina_nimi = vormista_ladina(row['species'])
-            
-            # Paneeli pealkiri: Eesti nimi ja kaldkirjas ladina nimi
             pealkiri = f"{eesti_nimi} ({ladina_nimi})" if ladina_nimi else eesti_nimi
             
             with st.expander(pealkiri):
-                col_text, col_img = st.columns([1, 1])
+                # Tekst ja pilt kõrvuti
+                col_text, col_img = st.columns([3, 2])
                 
                 with col_text:
-                    st.write(f"**Perekond:** {row.get('genus', '-')}")
-                    st.write(f"**Sugukond:** {row.get('family', '-')}")
-                    # Siia saab hiljem lisada ka muud andmed (nt suurus)
+                    st.write("**Eose kirjeldus:**")
+                    # Otsime kirjeldust veerust 'description'. Kui seda pole, näitame teadet.
+                    kirjeldus = row.get('description', 'Kirjeldus puudub.')
+                    if pd.isna(kirjeldus) or kirjeldus == "":
+                        kirjeldus = "Selle liigi kohta pole veel põhjalikku kirjeldust lisatud."
+                    
+                    st.write(kirjeldus)
+                    
+                    # Kui on olemas mõõtmed, lisame need kirjelduse alla
                     if 'size_min' in row and pd.notna(row['size_min']):
-                        st.write(f"**Eose suurus:** {row['size_min']}–{row['size_max']} µm")
+                        st.write(f"📏 **Suurus:** {row['size_min']}–{row['size_max']} µm")
 
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
                         try:
                             st.image(row['image_url'], use_container_width=True)
                         except:
-                            st.caption("🖼️ (Foto failitee viga)")
+                            st.caption("🖼️ Fotofaili ei leitud")
                     else:
-                        st.caption("📸 Selle liigi fotot veel pole")
+                        st.caption("📸 Foto puudub")
 
 except Exception as e:
     st.error(f"Viga: {e}")
