@@ -15,35 +15,27 @@ try:
     st.sidebar.header("Määramistunnused")
     aktiivsed_filtrid = []
 
-    # --- KATEGOORIA: KUJU (expanded=False, et oleks alguses kinni) ---
+    # --- KATEGOORIA: KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         st.write("Vali eose kuju:")
-        
-        # Bilateraalne
         if 'shape_bilateral' in df.columns:
             st.image("pildid/bilateral.png", width=150)
             if st.checkbox("Bilateraalne", key="chk_bilateral"):
                 df = df[df['shape_bilateral'] == 1]
                 aktiivsed_filtrid.append("Kuju: Bilateraalne")
-        
         st.divider()
-
-        # Tetraeedriline
         if 'shape_tetra' in df.columns:
             st.image("pildid/tetra.png", width=150)
             if st.checkbox("Tetraeedriline", key="chk_tetra"):
                 df = df[df['shape_tetra'] == 1]
                 aktiivsed_filtrid.append("Kuju: Tetraeedriline")
-
         st.divider()
-
-        # Sfääriline
         if 'shape_spherical' in df.columns:
             if st.checkbox("Sfääriline", key="chk_spherical"):
                 df = df[df['shape_spherical'] == 1]
                 aktiivsed_filtrid.append("Kuju: Sfääriline")
 
-    # --- KATEGOORIA: PINNASTRUKTUUR (Kõik valikud taastatud) ---
+    # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         pind_valikud = {
             "Ogaline (echinate)": "surf_echinate",
@@ -83,11 +75,10 @@ try:
 
     vastete_arv = len(df)
     if vastete_arv == 0:
-        st.warning("Selliste tunnustega liike ei leitud. Muuda valikuid.")
+        st.warning("Selliste tunnustega liike ei leitud.")
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Vormistame nime kaldkirja
         def vormista_kaldkiri(nimi):
             if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 parts = nimi.split("(", 1)
@@ -98,11 +89,27 @@ try:
         if 'species' in df_display.columns:
             df_display['Liiginimi (ladina k)'] = df_display['species'].apply(vormista_kaldkiri)
         
-        # Valime veerud kuvamiseks
         soovitud = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in soovitud if v in df_display.columns]
         
+        # Tabel
         st.table(df_display[olemasolevad])
+
+        # --- FOTOGALERII ---
+        if 'image_url' in df.columns:
+            # Filtreerime välja ainult need read, kus pildi tee on kirjas
+            df_piltidega = df[df['image_url'].notna() & (df['image_url'] != "")]
+            
+            if not df_piltidega.empty:
+                st.write("### 📸 Eoste fotod")
+                # Kuvame pildid ridades, 3 tükki reas
+                cols = st.columns(3)
+                for i, (idx, row) in enumerate(df_piltidega.iterrows()):
+                    with cols[i % 3]:
+                        try:
+                            st.image(row['image_url'], caption=row['species'], use_container_width=True)
+                        except:
+                            st.error(f"Pilti ei leitud: {row['image_url']}")
 
 except Exception as e:
     st.error(f"Viga: {e}")
