@@ -16,24 +16,38 @@ try:
 
     # Defineerime, milliseid veerge me tahame filtritena kasutada
     # Kontrolli, et need nimed oleksid täpselt samad, mis su Excelis!
-    voimalikud_veerud = [
-        'shape_bilateral', 'shape_spherical', 'shape_tetra', 
-        'perine_absent', 'surf_cristate', 'surf_echinate', 
-        'surf_reticulate', 'surf_verrucate'
-    ]
+   # 2. FILTRITE LOOMINE (Kasutame sinu eestikeelseid termineid)
+    st.sidebar.header("Määramistunnused")
+    st.sidebar.write("Vali eose tunnused:")
+
+    # Sõnastik: "Eestikeelne nimi" : "Veeru nimi tabelis"
+    tunnused = {
+        "Kuju: bilateraalne": "shape_bilateral",
+        "Kuju: sfääriline": "shape_spherical",
+        "Kuju: tetraeedriline": "shape_tetra",
+        "Perispoor puudub": "perine_absent",
+        "Pind: ogaline (echinate)": "surf_echinate",
+        "Pind: peeneogaline (microechinate)": "surf_microechinate",
+        "Pind: tüükaline (verrucate)": "surf_verrucate",
+        "Pind: lohuline (lophate)": "surf_lophate",
+        "Pind: harjaline (cristate)": "surf_cristate",
+        "Pind: retikulaarne (reticulate)": "surf_reticulate",
+        "Pind: kurruline (rugulate)": "surf_rugulate",
+        "Pind: konksuline (hamulate)": "surf_hamulate",
+        "Pind: granulaarne (granulate)": "surf_granulate",
+        "Pind: peenkare (scabrate)": "surf_scabrate",
+        "Pind: sile (psilate)": "surf_psilate",
+        "Pind: auguline (foveolate)": "surf_foveolate",
+        "Pind: voldiline (folded)": "surf_folded"
+    }
 
     aktiivsed_filtrid = []
 
-    # Käime kõik võimalikud veerud läbi
-    for veerg in voimalikud_veerud:
+    for silt, veerg in tunnused.items():
         if veerg in df.columns:
-            # Teeme ilusa nime (nt shape_bilateral -> Bilateral)
-            ilus_nimi = veerg.replace('_', ' ').capitalize()
-            
-            # Kui kasutaja märgib kasti, siis filtreerime
-            if st.sidebar.checkbox(ilus_nimi, key=veerg):
+            if st.sidebar.checkbox(silt, key=veerg):
                 df = df[df[veerg] == 1]
-                aktiivsed_filtrid.append(ilus_nimi)
+                aktiivsed_filtrid.append(silt)
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
