@@ -65,49 +65,33 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Vormistame nime kaldkirja ainult sulgude sees
-        def vormista_html_nimi(nimi):
+        # Teeme kaldkirja kasutades Markdown tärne (st.dataframe toetab seda nüüd)
+        def vormista_markdown_nimi(nimi):
             if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 eesti, ladina = nimi.split("(", 1)
                 ladina = ladina.replace(")", "")
-                return f"{eesti}(<i>{ladina}</i>)"
+                return f"{eesti}(_{ladina.strip()}_)" # Kasutame alakriipse kaldkirja jaoks
             return nimi
 
         if 'species' in df.columns:
-            df['Liiginimi (ladina k)'] = df['species'].apply(vormista_html_nimi)
+            df['Liiginimi (ladina k)'] = df['species'].apply(vormista_markdown_nimi)
 
-        # Valime veerud
+        # Valime ainult vajalikud veerud
         naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in naitatavad if v in df.columns]
         
-        # Teeme tabelist HTML-i
-        tabeli_html = df[olemasolevad].to_html(escape=False, index=False)
-        
-        # Kuvame tabeli koos CSS-iga, et vältida "kõik järjest" probleemi
-        st.write(f"""
-            <style>
-                .custom-table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 10px 0;
-                    font-size: 16px;
-                }}
-                .custom-table th {{
-                    text-align: left;
-                    background-color: #262730;
-                    padding: 12px;
-                    border-bottom: 2px solid #4e4e4e;
-                }}
-                .custom-table td {{
-                    text-align: left;
-                    padding: 12px;
-                    border-bottom: 1px solid #333333;
-                }}
-            </style>
-            <div class="custom-table">
-                {tabeli_html}
-            </div>
-        """, unsafe_allow_html=True)
+        # KUVAME TABELI KORREKTSELT
+        st.dataframe(
+            df[olemasolevad],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Liiginimi (ladina k)": st.column_config.TextColumn(
+                    "Liiginimi (ladina k)",
+                    width="large",
+                )
+            }
+        )
 
 except Exception as e:
     st.error(f"Viga: {e}")
