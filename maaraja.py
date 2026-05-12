@@ -10,7 +10,7 @@ try:
     # Andmete laadimine
     df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
     
-    # 2. FILTRITE LOOMINE (Kõik expanderid on alguses suletud: expanded=False)
+    # 2. FILTRITE LOOMINE
     st.sidebar.header("Määramistunnused")
 
     aktiivsed_filtrid = []
@@ -24,22 +24,23 @@ try:
         }
         for silt, veerg in kuju_valikud.items():
             if veerg in df.columns:
-                if st.sidebar.checkbox(silt, key=veerg):
+                if st.checkbox(silt, key=veerg):
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Kuju: {silt}")
 
     # --- KATEGOORIA: PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
-            # Kasutaja valib, kas perispoor on olemas
-            perispoor_olemas = st.sidebar.radio("Perispoor:", ["Valimata", "Olemas", "Puudub"], index=0)
-            
-            if perispoor_olemas == "Olemas":
-                df = df[df['perine_absent'] == 0] # Kui perine_absent on 0, siis perispoor on olemas
-                aktiivsed_filtrid.append("Perispoor: Olemas")
-            elif perispoor_olemas == "Puudub":
+            # Nüüd on see lihtsalt märkeruut nagu teisedki
+            if st.checkbox("Perispoor puudub", key='perine_absent'):
                 df = df[df['perine_absent'] == 1]
                 aktiivsed_filtrid.append("Perispoor: Puudub")
+            
+            # Lisasin siia igaks juhuks ka "Perispoor olemas" valiku, 
+            # mis töötab vastupidiselt (kontrollib, et perine_absent on 0)
+            if st.checkbox("Perispoor olemas", key='perine_present'):
+                df = df[df['perine_absent'] == 0]
+                aktiivsed_filtrid.append("Perispoor: Olemas")
 
     # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
@@ -60,13 +61,13 @@ try:
         }
         for silt, veerg in pind_valikud.items():
             if veerg in df.columns:
-                if st.sidebar.checkbox(silt, key=veerg):
+                if st.checkbox(silt, key=veerg):
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
     # --- KATEGOORIA: SUURUS ---
     with st.sidebar.expander("Suurus", expanded=False):
-        st.sidebar.write("Suuruse filtrid lisanduvad siia peagi.")
+        st.write("Suuruse filtrid lisanduvad siia peagi.")
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
@@ -81,26 +82,27 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Loome veeru, kus on ainult ladinakeelne nimi tärnidega
         if 'species' in df.columns:
-            df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"*{x}*")
+            # Kasutame <i> märgendit HTML-i jaoks
+            df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"<i>{x}</i>")
 
         if vastete_arv == 1:
             st.info(f"Tuvastatud liik: **{df.iloc[0]['species']}**")
 
-        # Näitame tabelit
-        # Võtame kuvamiseks uue 'Liiginimi (ladina k)' veeru
-        naidatavad = ['Liiginimi (ladina k)', 'genus', 'family']
-        olemasolevad = [v for v in naidatavad if v in df.columns]
+        # Tabeli kuvamine HTML-ina, et stiil ja kaldkiri püsiksid
+        naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
+        olemasolevad = [v for v in naitatavad if v in df.columns]
         
-        st.dataframe(
-            df[olemasolevad], 
-            use_container_width=True,
-            column_config={
-                "Liiginimi (ladina k)": st.column_config.TextColumn("Liiginimi (ladina k)")
-            },
-            hide_index=True 
-        )
+        # Lisame väikse CSS-i, et tabel täidaks ekraani ja näeks kena välja
+        table_html = df[olemasolevad].to_html(escape=False, index=False)
+        st.write(f"""
+            <style>
+                table {{ width: 100%; border-collapse: collapse; }}
+                th {{ text-align: left; background-color: #262730; color: white; padding: 10px; }}
+                td {{ padding: 10px; border-bottom: 1px solid #464646; }}
+            </style>
+            {table_html}
+        """, unsafe_allow_html=True)
 
 except Exception as e:
     st.error(f"Viga: {e}")
