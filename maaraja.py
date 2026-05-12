@@ -84,24 +84,33 @@ try:
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
-    # --- 4. SUURUS (P ja E) ---
+ # --- 4. SUURUS (P ja E) ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (P_mean µm)", expanded=False):
-            p_min_val = float(df['P_mean'].min())
-            p_max_val = float(df['P_mean'].max())
-            valitud_p = st.slider("P-väärtus", p_min_val, p_max_val, (p_min_val, p_max_val), key="slider_p")
-            df = df[(df['P_mean'] >= valitud_p[0]) & (df['P_mean'] <= valitud_p[1])]
-            if valitud_p != (p_min_val, p_max_val):
-                aktiivsed_filtrid.append(f"P_mean: {valitud_p[0]}–{valitud_p[1]} µm")
+            # Arvutame piirid ainult olemasolevate numbrite põhjal
+            p_data = df['P_mean'].dropna()
+            if not p_data.empty:
+                p_min_val, p_max_val = float(p_data.min()), float(p_data.max())
+                valitud_p = st.slider("P-väärtus", p_min_val, p_max_val, (p_min_val, p_max_val), key="slider_p")
+                
+                # FILTRI UUENDUS: Lubame väärtuse vahemikus VÕI tühja väärtuse (NaN)
+                df = df[(df['P_mean'].between(valitud_p[0], valitud_p[1])) | (df['P_mean'].isna())]
+                
+                if valitud_p != (p_min_val, p_max_val):
+                    aktiivsed_filtrid.append(f"P_mean: {valitud_p[0]}–{valitud_p[1]} µm (või teadmata)")
 
     if 'E_mean' in df.columns:
         with st.sidebar.expander("Ekvatoriaaldiameeter (E_mean µm)", expanded=False):
-            e_min_val = float(df['E_mean'].min())
-            e_max_val = float(df['E_mean'].max())
-            valitud_e = st.slider("E-väärtus", e_min_val, e_max_val, (e_min_val, e_max_val), key="slider_e")
-            df = df[(df['E_mean'] >= valitud_e[0]) & (df['E_mean'] <= valitud_e[1])]
-            if valitud_e != (e_min_val, e_max_val):
-                aktiivsed_filtrid.append(f"E_mean: {valitud_e[0]}–{valitud_e[1]} µm")
+            e_data = df['E_mean'].dropna()
+            if not e_data.empty:
+                e_min_val, e_max_val = float(e_data.min()), float(e_data.max())
+                valitud_e = st.slider("E-väärtus", e_min_val, e_max_val, (e_min_val, e_max_val), key="slider_e")
+                
+                # FILTRI UUENDUS: Lubame väärtuse vahemikus VÕI tühja väärtuse (NaN)
+                df = df[(df['E_mean'].between(valitud_e[0], valitud_e[1])) | (df['E_mean'].isna())]
+                
+                if valitud_e != (e_min_val, e_max_val):
+                    aktiivsed_filtrid.append(f"E_mean: {valitud_e[0]}–{valitud_e[1]} µm (või teadmata)")
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
