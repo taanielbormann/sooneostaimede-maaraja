@@ -7,15 +7,14 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
-    # Kasutame utf-8-sig (see eemaldab ka võimaliku peidetud märgi faili algusest)
-    df = pd.read_csv('Fixed_Spore_Data.csv', encoding='utf-8-sig')
+    # See kodeering (cp1252) oskab lugeda nii täpitähti kui ka Windowsi "eri-kriipse"
+    df = pd.read_csv('Fixed_Spore_Data.csv', encoding='cp1252')
     df.columns = df.columns.str.strip()
     
-    # Kui ikka tekib probleeme, võid kirjelduse veeru "üle pesta"
-    if 'description' in df.columns:
-        # See asendab kõik mittestandardsed kriipsud tavalise pikema mõttekriipsuga
-        # või vajadusel tavalise sidekriipsuga
-        df['description'] = df['description'].str.replace('', '–')
+except UnicodeDecodeError:
+    # Kui ikka jukerdab, proovime latin-1, aga vigaseid märke ignoreerides
+    df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
+    df.columns = df.columns.str.strip()
     
     # 2. FILTRITE LOOMINE KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
