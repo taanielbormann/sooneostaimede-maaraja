@@ -8,7 +8,7 @@ st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 # 1. Andmete laadimine
 try:
-    df = pd.read_csv(r'C:\Users\taani_39v8j\Documents\eosed\Fixed_Spore_Data.csv', encoding='latin-1')
+    df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
     
     st.sidebar.header("Määramistunnused")
     st.sidebar.write("Vali eose tunnused:")
