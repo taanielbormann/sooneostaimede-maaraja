@@ -15,20 +15,20 @@ try:
     st.sidebar.header("Määramistunnused")
     aktiivsed_filtrid = []
 
-    # --- KATEGOORIA: KUJU ---
-    with st.sidebar.expander("Kuju", expanded=True):
+    # --- KATEGOORIA: KUJU (expanded=False, et oleks alguses kinni) ---
+    with st.sidebar.expander("Kuju", expanded=False):
         st.write("Vali eose kuju:")
         
-        # 1. BILATERAALNE
+        # Bilateraalne
         if 'shape_bilateral' in df.columns:
             st.image("pildid/bilateral.png", width=150)
             if st.checkbox("Bilateraalne", key="chk_bilateral"):
                 df = df[df['shape_bilateral'] == 1]
                 aktiivsed_filtrid.append("Kuju: Bilateraalne")
         
-        st.divider() # Teeb väikse vahejoone valikute vahele
+        st.divider()
 
-        # 2. TETRAEEDRILINE
+        # Tetraeedriline
         if 'shape_tetra' in df.columns:
             st.image("pildid/tetra.png", width=150)
             if st.checkbox("Tetraeedriline", key="chk_tetra"):
@@ -37,24 +37,44 @@ try:
 
         st.divider()
 
-        # 3. SFÄÄRILINE (kui sul selle jaoks pilti pole, jääb ainult tekst)
+        # Sfääriline
         if 'shape_spherical' in df.columns:
-            # Kui sul tekib sfäärilise pilt, lisa siia: st.image("pildid/spherical.png", width=150)
             if st.checkbox("Sfääriline", key="chk_spherical"):
                 df = df[df['shape_spherical'] == 1]
                 aktiivsed_filtrid.append("Kuju: Sfääriline")
 
-    # --- KATEGOORIA: PINNASTRUKTUUR ---
+    # --- KATEGOORIA: PINNASTRUKTUUR (Kõik valikud taastatud) ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         pind_valikud = {
-            "Ogaline": "surf_echinate", "Tüükaline": "surf_verrucate", 
-            "Retikulaarne": "surf_reticulate", "Sile": "surf_psilate"
+            "Ogaline (echinate)": "surf_echinate",
+            "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate",
+            "Lohuline (lophate)": "surf_lophate",
+            "Harjaline (cristate)": "surf_cristate",
+            "Retikulaarne (reticulate)": "surf_reticulate",
+            "Kurruline (rugulate)": "surf_rugulate",
+            "Konksuline (hamulate)": "surf_hamulate",
+            "Granulaarne (granulate)": "surf_granulate",
+            "Peenkare (scabrate)": "surf_scabrate",
+            "Sile (psilate)": "surf_psilate",
+            "Auguline (foveolate)": "surf_foveolate",
+            "Voldiline (folded)": "surf_folded"
         }
         for silt, veerg in pind_valikud.items():
             if veerg in df.columns:
-                if st.checkbox(silt, key=f"surf_{veerg}"):
+                if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
+
+    # --- KATEGOORIA: PERISPOOR ---
+    with st.sidebar.expander("Perispoor", expanded=False):
+        if 'perine_absent' in df.columns:
+            if st.checkbox("Perispoor puudub", key='chk_p_absent'):
+                df = df[df['perine_absent'] == 1]
+                aktiivsed_filtrid.append("Perispoor: Puudub")
+            if st.checkbox("Perispoor olemas", key='chk_p_present'):
+                df = df[df['perine_absent'] == 0]
+                aktiivsed_filtrid.append("Perispoor: Olemas")
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
@@ -78,6 +98,7 @@ try:
         if 'species' in df_display.columns:
             df_display['Liiginimi (ladina k)'] = df_display['species'].apply(vormista_kaldkiri)
         
+        # Valime veerud kuvamiseks
         soovitud = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in soovitud if v in df_display.columns]
         
