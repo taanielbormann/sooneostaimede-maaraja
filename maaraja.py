@@ -7,8 +7,11 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
-    # Andmete laadimine
+    # Andmete laadimine - kontrollime, et fail oleks loetav
     df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
+    
+    # Eemaldame veergude nimedest igaks juhuks tühikud
+    df.columns = df.columns.str.strip()
     
     # 2. FILTRITE LOOMINE KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
@@ -25,12 +28,12 @@ try:
 
     # --- KATEGOORIA: PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
+        # Kasutame märkeruute, et vältida raadionuppude "Valimata" muret
         if 'perine_absent' in df.columns:
-            # Kasutame siin märkeruute, et vältida "Valimata" nupu probleemi
-            if st.checkbox("Perispoor puudub", key='perine_absent'):
+            if st.checkbox("Perispoor puudub", key='perine_absent_check'):
                 df = df[df['perine_absent'] == 1]
                 aktiivsed_filtrid.append("Perispoor: Puudub")
-            if st.checkbox("Perispoor olemas", key='perine_present'):
+            if st.checkbox("Perispoor olemas", key='perine_present_check'):
                 df = df[df['perine_absent'] == 0]
                 aktiivsed_filtrid.append("Perispoor: Olemas")
 
@@ -62,21 +65,27 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # VORMISTAME TABELI MARKDOWNIS (see hoiab nimekirja pika ja ilusa)
-        # Teeme uue nimeveeru, kus ladina nimi on kaldkirjas
-        def vormista_tekst(nimi):
-            if "(" in nimi and ")" in nimi:
+        # Teeme kaldkirja botaanilise nime jaoks
+        def vormista_kaldkiri(nimi):
+            if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 eesti, ladina = nimi.split("(", 1)
                 return f"{eesti} (*{ladina.replace(')', '')}*)"
             return nimi
 
-        # Valime veerud ja vormistame
-        naitatavad_andmed = df[['species', 'genus', 'family']].copy()
-        naitatavad_andmed['Liiginimi (ladina k)'] = naitatavad_andmed['species'].apply(vormista_tekst)
+        # Loome uue veeru kuvamiseks
+        if 'species' in df.columns:
+            df['Liiginimi'] = df['species'].apply(vormista_kaldkiri)
         
-        # Kuvame tulemused puhta Markdown tabelina
-        # See meetod garanteerib, et teksti ei suruta ühte jorusse kokku
-        st.markdown(naitatavad_andmed[['Liiginimi (ladina k)', 'genus', 'family']].to_markdown(index=False))
+        # KONTROLL: millised veerud on failis päriselt olemas?
+        soovitud_veerud = ['Liiginimi', 'genus', 'family']
+        olemasolevad_veerud = [v for v in soovitud_veerud if v in df.columns]
+
+        # Kui veerge 'genus' või 'family' pole, näitame vähemalt liiginime
+        if not olemasolevad_veerud and 'species' in df.columns:
+            olemasolevad_veerud = ['Liiginimi']
+
+        # KUVAMINE: Kasutame st.table, et vältida HTML-joru ja Markdowni probleeme
+        st.table(df[olemasolevad_veerud])
 
 except Exception as e:
     st.error(f"Viga: {e}")
