@@ -26,6 +26,7 @@ try:
     # --- KATEGOORIA: PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
+            # Kasutame siin märkeruute, et vältida "Valimata" nupu probleemi
             if st.checkbox("Perispoor puudub", key='perine_absent'):
                 df = df[df['perine_absent'] == 1]
                 aktiivsed_filtrid.append("Perispoor: Puudub")
@@ -50,10 +51,6 @@ try:
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
-    # --- KATEGOORIA: SUURUS ---
-    with st.sidebar.expander("Suurus", expanded=False):
-        st.write("Suuruse filtrid lisanduvad siia peagi.")
-
     # 3. TULEMUSTE KUVAMINE
     st.divider()
     if aktiivsed_filtrid:
@@ -65,33 +62,21 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Teeme kaldkirja kasutades Markdown tärne (st.dataframe toetab seda nüüd)
-        def vormista_markdown_nimi(nimi):
-            if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
+        # VORMISTAME TABELI MARKDOWNIS (see hoiab nimekirja pika ja ilusa)
+        # Teeme uue nimeveeru, kus ladina nimi on kaldkirjas
+        def vormista_tekst(nimi):
+            if "(" in nimi and ")" in nimi:
                 eesti, ladina = nimi.split("(", 1)
-                ladina = ladina.replace(")", "")
-                return f"{eesti}(_{ladina.strip()}_)" # Kasutame alakriipse kaldkirja jaoks
+                return f"{eesti} (*{ladina.replace(')', '')}*)"
             return nimi
 
-        if 'species' in df.columns:
-            df['Liiginimi (ladina k)'] = df['species'].apply(vormista_markdown_nimi)
-
-        # Valime ainult vajalikud veerud
-        naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
-        olemasolevad = [v for v in naitatavad if v in df.columns]
+        # Valime veerud ja vormistame
+        naitatavad_andmed = df[['species', 'genus', 'family']].copy()
+        naitatavad_andmed['Liiginimi (ladina k)'] = naitatavad_andmed['species'].apply(vormista_tekst)
         
-        # KUVAME TABELI KORREKTSELT
-        st.dataframe(
-            df[olemasolevad],
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Liiginimi (ladina k)": st.column_config.TextColumn(
-                    "Liiginimi (ladina k)",
-                    width="large",
-                )
-            }
-        )
+        # Kuvame tulemused puhta Markdown tabelina
+        # See meetod garanteerib, et teksti ei suruta ühte jorusse kokku
+        st.markdown(naitatavad_andmed[['Liiginimi (ladina k)', 'genus', 'family']].to_markdown(index=False))
 
 except Exception as e:
     st.error(f"Viga: {e}")
