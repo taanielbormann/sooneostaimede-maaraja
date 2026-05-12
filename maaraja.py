@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Lehe seadistus - layout="wide" teebki vaate laiemaks
+# 1. Lehe seadistus
 st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon="🌿", layout="wide")
 
 st.title("🌿 Eesti sooneostaimede eoste määraja")
@@ -19,7 +19,6 @@ try:
         kuju_valikud = {"Bilateraalne": "shape_bilateral", "Sfääriline": "shape_spherical", "Tetraeedriline": "shape_tetra"}
         for silt, veerg in kuju_valikud.items():
             if veerg in df.columns:
-                # Kasutame st.checkbox ilma .sidebarita, et see püsiks expanderi sees
                 if st.checkbox(silt, key=veerg):
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Kuju: {silt}")
@@ -64,12 +63,11 @@ try:
     if vastete_arv == 0:
         st.warning("Selliste tunnustega liike ei leitud. Muuda valikuid.")
     else:
-        # Roheline riba vastete arvuga
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Vormistame nime kaldkirja (ainult sulgude sisu)
+        # Vormistame nime kaldkirja ainult sulgude sees
         def vormista_html_nimi(nimi):
-            if "(" in nimi and ")" in nimi:
+            if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 eesti, ladina = nimi.split("(", 1)
                 ladina = ladina.replace(")", "")
                 return f"{eesti}(<i>{ladina}</i>)"
@@ -78,38 +76,37 @@ try:
         if 'species' in df.columns:
             df['Liiginimi (ladina k)'] = df['species'].apply(vormista_html_nimi)
 
-        # Valime veerud kuvamiseks
+        # Valime veerud
         naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in naitatavad if v in df.columns]
         
-        # Loome tabeli HTML-koodi
+        # Teeme tabelist HTML-i
         tabeli_html = df[olemasolevad].to_html(escape=False, index=False)
         
-        # Kuvame tabeli suurelt ja lisame CSS stiili
+        # Kuvame tabeli koos CSS-iga, et vältida "kõik järjest" probleemi
         st.write(f"""
             <style>
-                table {{ 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    font-size: 18px; /* Teeb teksti veidi suuremaks ja loetavamaks */
-                    margin-top: 10px;
+                .custom-table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 10px 0;
+                    font-size: 16px;
                 }}
-                th {{ 
-                    text-align: left; 
-                    border-bottom: 3px solid #4e4e4e; 
-                    padding: 12px; 
-                    background-color: #0e1117; 
-                    color: #ffffff;
+                .custom-table th {{
+                    text-align: left;
+                    background-color: #262730;
+                    padding: 12px;
+                    border-bottom: 2px solid #4e4e4e;
                 }}
-                td {{ 
-                    text-align: left; 
-                    border-bottom: 1px solid #333333; 
-                    padding: 12px; 
-                    vertical-align: top;
+                .custom-table td {{
+                    text-align: left;
+                    padding: 12px;
+                    border-bottom: 1px solid #333333;
                 }}
-                tr:hover {{ background-color: #1e2127; }} /* Lisab rea peale liikudes õrna esiletõstu */
             </style>
-            {tabeli_html}
+            <div class="custom-table">
+                {tabeli_html}
+            </div>
         """, unsafe_allow_html=True)
 
 except Exception as e:
