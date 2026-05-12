@@ -80,7 +80,7 @@ try:
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
     # --- 4. SUURUS (P ja E) ---
-    # Nüüd on siin parandus, et liigid, kellel mõõtmed puuduvad (nt võtmeheinad), alles jääksid!
+    # Parandus: hoiame alles liigid, kellel andmed puuduvad (nt võtmeheinad)
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (P_mean µm)", expanded=False):
             p_data = df['P_mean'].dropna()
@@ -107,20 +107,22 @@ try:
 
         # DETAILNE VAADE
         for _, row in df.iterrows():
-            # NIMEVORMISTUS: Eraldame ja teeme ladina nime kaldkirja (Markdown töötab expanderi sisu sees paremini)
+            # NIMEVORMISTUS
             species_raw = row['species']
             if "(" in species_raw:
                 eesti, ladina = species_raw.split("(", 1)
                 ladina = ladina.replace(")", "").strip()
-                # Kasutame pealkirjas Markdowni stiili
-                pealkiri = f"{eesti.strip()} ({ladina})"
+                pealkiri_valjas = eesti.strip() # Ainult eestikeelne nimi paneeli peal
             else:
-                pealkiri = species_raw
+                pealkiri_valjas = species_raw
+                ladina = None
 
-            with st.expander(pealkiri):
-                # Siin expanderi SEES saame pealkirja uuesti panna korrektses kaldkirjas
-                if "(" in species_raw:
-                    st.markdown(f"### {eesti.strip()} *({ladina})*")
+            with st.expander(pealkiri_valjas):
+                # Paneeli SEES kuvame täisnime koos kaldkirjas ladinakeelse nimega
+                if ladina:
+                    st.markdown(f"### {pealkiri_valjas} *({ladina})*")
+                else:
+                    st.markdown(f"### {pealkiri_valjas}")
                 
                 col_text, col_img = st.columns([3, 2])
                 with col_text:
