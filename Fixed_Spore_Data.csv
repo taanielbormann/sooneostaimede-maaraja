@@ -22,14 +22,14 @@ ohtene sõnajalg (Dryopteris carthusiana),1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0
 austria sõnajalg (Dryopteris dilatata),1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,28.8,49.3,2,7.5,
 brauni astelsõnajalg (Polystichum braunii),1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,29.7,46.8,2,6.3,
 odajas astelsõnajalg (Polystichum lonchitis),1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,27.2,41,2,6.4,18
-ogane astelsõnajalg (Polystichum aculeatum) ,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,27,40.3,2,5.4,20
+ogane astelsõnajalg (Polystichum aculeatum),1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,27,40.3,2,5.4,20
 harilik laanesõnajalg (Matteuccia struthiopteris),1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,28.6,44.6,2,8.8,28
 kivi-imar (Polypodium vulgare),1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,39,73.8,3.2,2.8,50
 harilik soosõnajalg (Thelypteris palustris),1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,30.9,50.5,2,,29
 harilik metssõnajalg (Phegopteris connectilis),1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,32,61.8,2,9.5,36
-konnaosi  (Equisetum fluviatile),0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,46,46,,,
-Harilik maokeel,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,,27.2,3.3,,
-Virgiinia võtmehein,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,,27.2,,,
-Haruline võtmehein,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,,39.2,1.9,,
-Kuu-võtmehein,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,,38,4,,
-Kummeli-võtmehein,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,,28.2,2.7,,
+konnaosi (Equisetum fluviatile),0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,46,46,,,
+harilik maokeel (Ophioglossum vulgatum),0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,,27.2,3.3,,
+virgiinia võtmehein (Botrychium virginianum),0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,,27.2,,,
+haruline võtmehein (Botrychium matricariifolium),0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,,39.2,1.9,,
+kuu-võtmehein (Botrychium lunaria),0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,,38,4,,
+kummeli-võtmehein (Botrychium multifidum),0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,,28.2,2.7,,
