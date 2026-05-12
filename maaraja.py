@@ -7,17 +7,15 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
-    # ANDMETE LAADIMINE
-    # Kasutame cp1252 kodeeringut, et vältida "kaste" ja dekodeerimisvigu (0xfc jne)
+    # ANDMETE LAADIMINE (cp1252 on parim Excelist tulnud failidele)
     try:
         df = pd.read_csv('Fixed_Spore_Data.csv', encoding='cp1252')
     except:
-        # Kui cp1252 ei toimi, proovime latin-1 (standardne fallback)
         df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
     
     df.columns = df.columns.str.strip()
     
-    # PUHASTAME KIRJELDUSED (Asendame võimalikud vigased sümbolid puhta mõttekriipsuga)
+    # PUHASTAME KIRJELDUSED (Asendame vigased mõttekriipsud)
     if 'description' in df.columns:
         df['description'] = df['description'].str.replace('\x96', '–', regex=True)
         df['description'] = df['description'].str.replace('\xad', '-', regex=True)
@@ -32,60 +30,61 @@ try:
         
         # Bilateraalne
         if 'shape_bilateral' in df.columns:
-            st.image("pildid/bilateral.png", width=150)
-            if st.checkbox("Bilateraalne", key="chk_bilateral"):
-                df = df[df['shape_bilateral'] == 1]
-                aktiivsed_filtrid.append("Kuju: Bilateraalne")
+            c1, c2 = st.columns([1, 3])
+            with c1: st.image("pildid/bilateral.png")
+            with c2: 
+                if st.checkbox("Bilateraalne", key="chk_bilateral"):
+                    df = df[df['shape_bilateral'] == 1]
+                    aktiivsed_filtrid.append("Kuju: Bilateraalne")
         
-        st.divider()
-
         # Tetraeedriline
         if 'shape_tetra' in df.columns:
-            st.image("pildid/tetra.png", width=150)
-            if st.checkbox("Tetraeedriline", key="chk_tetra"):
-                df = df[df['shape_tetra'] == 1]
-                aktiivsed_filtrid.append("Kuju: Tetraeedriline")
-
-        st.divider()
+            c1, c2 = st.columns([1, 3])
+            with c1: st.image("pildid/tetra.png")
+            with c2:
+                if st.checkbox("Tetraeedriline", key="chk_tetra"):
+                    df = df[df['shape_tetra'] == 1]
+                    aktiivsed_filtrid.append("Kuju: Tetraeedriline")
 
         # Sfääriline
         if 'shape_spherical' in df.columns:
-            if st.checkbox("Sfääriline", key="chk_spherical"):
-                df = df[df['shape_spherical'] == 1]
-                aktiivsed_filtrid.append("Kuju: Sfääriline")
+            c1, c2 = st.columns([1, 3])
+            with c1: st.write("⚪") # Kui pilti pole, võib kasutada sümbolit
+            with c2:
+                if st.checkbox("Sfääriline", key="chk_spherical"):
+                    df = df[df['shape_spherical'] == 1]
+                    aktiivsed_filtrid.append("Kuju: Sfääriline")
 
-   # --- KATEGOORIA: PINNASTRUKTUUR ---
+    # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         
-        # Eraldame RETIKULAARSE, et lisada sellele pilt
+        # Eraldi esiletõstetud pildiga: RETIKULAARNE
         if 'surf_reticulate' in df.columns:
-            # Kui sul on Illustratoris tehtud võrgusilma joonis, pane selle tee siia:
-            # st.image("pildid/reticulate.png", width=100) 
-            # Kui pilti veel pole, võid kasutada lihtsalt märkeruutu:
-            if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
-                df = df[df['surf_reticulate'] == 1]
-                aktiivsed_filtrid.append("Pind: Retikulaarne")
+            c1, c2 = st.columns([1, 3])
+            with c1:
+                # Eeldame, et sul on pilt nimega reticulate.png
+                try:
+                    st.image("pildid/reticulate.png")
+                except:
+                    st.write("🕸️")
+            with c2:
+                if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
+                    df = df[df['surf_reticulate'] == 1]
+                    aktiivsed_filtrid.append("Pind: Retikulaarne")
         
         st.divider()
-        st.write("Muud struktuurid:")
-
-        # Ülejäänud pinnastruktuurid loeteluna
-        pind_valikud = {
-            "Ogaline (echinate)": "surf_echinate", 
-            "Peeneogaline (microechinate)": "surf_microechinate",
-            "Tüükaline (verrucate)": "surf_verrucate", 
-            "Lohuline (lophate)": "surf_lophate",
-            "Harjaline (cristate)": "surf_cristate", 
-            "Kurruline (rugulate)": "surf_rugulate",
-            "Konksuline (hamulate)": "surf_hamulate", 
-            "Granulaarne (granulate)": "surf_granulate",
-            "Peenkare (scabrate)": "surf_scabrate", 
-            "Sile (psilate)": "surf_psilate",
-            "Auguline (foveolate)": "surf_foveolate", 
-            "Voldiline (folded)": "surf_folded"
+        
+        # Ülejäänud pinnastruktuurid
+        muud_pinnad = {
+            "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
+            "Harjaline (cristate)": "surf_cristate", "Kurruline (rugulate)": "surf_rugulate",
+            "Konksuline (hamulate)": "surf_hamulate", "Granulaarne (granulate)": "surf_granulate",
+            "Peenkare (scabrate)": "surf_scabrate", "Sile (psilate)": "surf_psilate",
+            "Auguline (foveolate)": "surf_foveolate", "Voldiline (folded)": "surf_folded"
         }
         
-        for silt, veerg in pind_valikud.items():
+        for silt, veerg in muud_pinnad.items():
             if veerg in df.columns:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
@@ -108,18 +107,17 @@ try:
 
     vastete_arv = len(df)
     if vastete_arv == 0:
-        st.warning("Selliste tunnustega liike ei leitud. Muuda valikuid.")
+        st.warning("Selliste tunnustega liike ei leitud.")
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Funktsioon ladinakeelse nime eraldamiseks ja vormistamiseks
         def vormista_ladina(nimi):
             if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
                 eesti, ladina = nimi.split("(", 1)
                 return eesti.strip(), ladina.replace(")", "").strip()
             return nimi, ""
 
-        # KUVAME TULEMUSED DETAILSETE PANEELIDENA
+        # DETAILNE VAADE PANEELIDENA
         for _, row in df.iterrows():
             eesti_nimi, ladina_nimi = vormista_ladina(row['species'])
             pealkiri = f"{eesti_nimi} ({ladina_nimi})" if ladina_nimi else eesti_nimi
@@ -129,24 +127,18 @@ try:
                 
                 with col_text:
                     st.write("**Eose kirjeldus:**")
-                    # Kuvame kirjelduse
                     kirjeldus = row.get('description', 'Kirjeldus puudub.')
-                    if pd.isna(kirjeldus) or kirjeldus == "":
-                        kirjeldus = "Selle liigi kohta pole veel põhjalikku kirjeldust lisatud."
+                    st.write(kirjeldus if pd.notna(kirjeldus) else "Kirjeldus puudub.")
                     
-                    st.write(kirjeldus)
-                    
-                    # Lisame mõõtmed, kui need on eraldi veergudes olemas
                     if 'size_min' in row and pd.notna(row['size_min']):
                         st.write(f"📏 **Suurus:** {row['size_min']}–{row['size_max']} µm")
 
                 with col_img:
-                    # Kuvame foto, kui link on olemas
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
                         try:
                             st.image(row['image_url'], use_container_width=True)
                         except:
-                            st.caption("🖼️ Fotofaili ei leitud")
+                            st.caption("🖼️ Foto puudub")
                     else:
                         st.caption("📸 Foto puudub")
 
