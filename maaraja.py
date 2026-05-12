@@ -7,7 +7,7 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
-    # ANDMETE LAADIMINE (cp1252 on parim Excelist tulnud failidele)
+    # ANDMETE LAADIMINE
     try:
         df = pd.read_csv('Fixed_Spore_Data.csv', encoding='cp1252')
     except:
@@ -15,7 +15,7 @@ try:
     
     df.columns = df.columns.str.strip()
     
-    # PUHASTAME KIRJELDUSED (Asendame vigased mõttekriipsud)
+    # PUHASTAME KIRJELDUSED
     if 'description' in df.columns:
         df['description'] = df['description'].str.replace('\x96', '–', regex=True)
         df['description'] = df['description'].str.replace('\xad', '-', regex=True)
@@ -26,9 +26,6 @@ try:
 
     # --- KATEGOORIA: KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
-        st.write("Vali eose kuju:")
-        
-        # Bilateraalne
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: st.image("pildid/bilateral.png")
@@ -37,7 +34,6 @@ try:
                     df = df[df['shape_bilateral'] == 1]
                     aktiivsed_filtrid.append("Kuju: Bilateraalne")
         
-        # Tetraeedriline
         if 'shape_tetra' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: st.image("pildid/tetra.png")
@@ -46,35 +42,24 @@ try:
                     df = df[df['shape_tetra'] == 1]
                     aktiivsed_filtrid.append("Kuju: Tetraeedriline")
 
-        # Sfääriline
         if 'shape_spherical' in df.columns:
-            c1, c2 = st.columns([1, 3])
-            with c1: st.write("⚪") # Kui pilti pole, võib kasutada sümbolit
-            with c2:
-                if st.checkbox("Sfääriline", key="chk_spherical"):
-                    df = df[df['shape_spherical'] == 1]
-                    aktiivsed_filtrid.append("Kuju: Sfääriline")
+            if st.checkbox("Sfääriline", key="chk_spherical"):
+                df = df[df['shape_spherical'] == 1]
+                aktiivsed_filtrid.append("Kuju: Sfääriline")
 
     # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
-        
-        # Eraldi esiletõstetud pildiga: RETIKULAARNE
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1:
-                # Eeldame, et sul on pilt nimega reticulate.png
-                try:
-                    st.image("pildid/reticulate.png")
-                except:
-                    st.write("🕸️")
+                try: st.image("pildid/reticulate.png")
+                except: st.write("🕸️")
             with c2:
                 if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
                     df = df[df['surf_reticulate'] == 1]
                     aktiivsed_filtrid.append("Pind: Retikulaarne")
         
         st.divider()
-        
-        # Ülejäänud pinnastruktuurid
         muud_pinnad = {
             "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
             "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
@@ -83,12 +68,22 @@ try:
             "Peenkare (scabrate)": "surf_scabrate", "Sile (psilate)": "surf_psilate",
             "Auguline (foveolate)": "surf_foveolate", "Voldiline (folded)": "surf_folded"
         }
-        
         for silt, veerg in muud_pinnad.items():
             if veerg in df.columns:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
+
+    # --- KATEGOORIA: SUURUS ---
+    if 'E_mean' in df.columns:
+        with st.sidebar.expander("Suurus (E_mean µm)", expanded=False):
+            min_e = float(df['E_mean'].min())
+            max_e = float(df['E_mean'].max())
+            valitud_e = st.slider("Ekvatoriaalväärtus", min_e, max_e, (min_e, max_e))
+            
+            df = df[(df['E_mean'] >= valitud_e[0]) & (df['E_mean'] <= valitud_e[1])]
+            if valitud_e != (min_e, max_e):
+                aktiivsed_filtrid.append(f"E_mean: {valitud_e[0]}–{valitud_e[1]} µm")
 
     # --- KATEGOORIA: PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
@@ -117,7 +112,6 @@ try:
                 return eesti.strip(), ladina.replace(")", "").strip()
             return nimi, ""
 
-        # DETAILNE VAADE PANEELIDENA
         for _, row in df.iterrows():
             eesti_nimi, ladina_nimi = vormista_ladina(row['species'])
             pealkiri = f"{eesti_nimi} ({ladina_nimi})" if ladina_nimi else eesti_nimi
@@ -127,11 +121,14 @@ try:
                 
                 with col_text:
                     st.write("**Eose kirjeldus:**")
-                    kirjeldus = row.get('description', 'Kirjeldus puudub.')
-                    st.write(kirjeldus if pd.notna(kirjeldus) else "Kirjeldus puudub.")
+                    st.write(row.get('description', 'Kirjeldus puudub.'))
                     
-                    if 'size_min' in row and pd.notna(row['size_min']):
-                        st.write(f"📏 **Suurus:** {row['size_min']}–{row['size_max']} µm")
+                    st.divider()
+                    st.write("**Mõõtmisandmed (keskmised):**")
+                    p_val = row.get('P_mean', '-')
+                    e_val = row.get('E_mean', '-')
+                    st.write(f"📐 **P_mean:** {p_val} µm")
+                    st.write(f"📐 **E_mean:** {e_val} µm")
 
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
