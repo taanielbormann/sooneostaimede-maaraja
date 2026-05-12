@@ -7,9 +7,15 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
-    # Andmete laadimine
-    df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
+    # Kasutame utf-8-sig (see eemaldab ka võimaliku peidetud märgi faili algusest)
+    df = pd.read_csv('Fixed_Spore_Data.csv', encoding='utf-8-sig')
     df.columns = df.columns.str.strip()
+    
+    # Kui ikka tekib probleeme, võid kirjelduse veeru "üle pesta"
+    if 'description' in df.columns:
+        # See asendab kõik mittestandardsed kriipsud tavalise pikema mõttekriipsuga
+        # või vajadusel tavalise sidekriipsuga
+        df['description'] = df['description'].str.replace('', '–')
     
     # 2. FILTRITE LOOMINE KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
