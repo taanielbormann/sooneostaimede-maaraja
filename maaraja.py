@@ -24,7 +24,7 @@ try:
     st.sidebar.header("Määramistunnused")
     aktiivsed_filtrid = []
 
-    # --- KATEGOORIA: KUJU ---
+    # --- 1. KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([1, 3])
@@ -47,7 +47,17 @@ try:
                 df = df[df['shape_spherical'] == 1]
                 aktiivsed_filtrid.append("Kuju: Sfääriline")
 
-    # --- KATEGOORIA: PINNASTRUKTUUR ---
+    # --- 2. PERISPOOR ---
+    with st.sidebar.expander("Perispoor", expanded=False):
+        if 'perine_absent' in df.columns:
+            if st.checkbox("Perispoor puudub", key='chk_p_absent'):
+                df = df[df['perine_absent'] == 1]
+                aktiivsed_filtrid.append("Perispoor: Puudub")
+            if st.checkbox("Perispoor olemas", key='chk_p_present'):
+                df = df[df['perine_absent'] == 0]
+                aktiivsed_filtrid.append("Perispoor: Olemas")
+
+    # --- 3. PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([1, 3])
@@ -74,26 +84,24 @@ try:
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
-    # --- KATEGOORIA: SUURUS ---
-    if 'E_mean' in df.columns:
-        with st.sidebar.expander("Suurus (E_mean µm)", expanded=False):
-            min_e = float(df['E_mean'].min())
-            max_e = float(df['E_mean'].max())
-            valitud_e = st.slider("Ekvatoriaalväärtus", min_e, max_e, (min_e, max_e))
-            
-            df = df[(df['E_mean'] >= valitud_e[0]) & (df['E_mean'] <= valitud_e[1])]
-            if valitud_e != (min_e, max_e):
-                aktiivsed_filtrid.append(f"E_mean: {valitud_e[0]}–{valitud_e[1]} µm")
+    # --- 4. SUURUS (P ja E) ---
+    if 'P_mean' in df.columns:
+        with st.sidebar.expander("Polaartelg (P_mean µm)", expanded=False):
+            p_min_val = float(df['P_mean'].min())
+            p_max_val = float(df['P_mean'].max())
+            valitud_p = st.slider("P-väärtus", p_min_val, p_max_val, (p_min_val, p_max_val), key="slider_p")
+            df = df[(df['P_mean'] >= valitud_p[0]) & (df['P_mean'] <= valitud_p[1])]
+            if valitud_p != (p_min_val, p_max_val):
+                aktiivsed_filtrid.append(f"P_mean: {valitud_p[0]}–{valitud_p[1]} µm")
 
-    # --- KATEGOORIA: PERISPOOR ---
-    with st.sidebar.expander("Perispoor", expanded=False):
-        if 'perine_absent' in df.columns:
-            if st.checkbox("Perispoor puudub", key='chk_p_absent'):
-                df = df[df['perine_absent'] == 1]
-                aktiivsed_filtrid.append("Perispoor: Puudub")
-            if st.checkbox("Perispoor olemas", key='chk_p_present'):
-                df = df[df['perine_absent'] == 0]
-                aktiivsed_filtrid.append("Perispoor: Olemas")
+    if 'E_mean' in df.columns:
+        with st.sidebar.expander("Ekvatoriaaldiameeter (E_mean µm)", expanded=False):
+            e_min_val = float(df['E_mean'].min())
+            e_max_val = float(df['E_mean'].max())
+            valitud_e = st.slider("E-väärtus", e_min_val, e_max_val, (e_min_val, e_max_val), key="slider_e")
+            df = df[(df['E_mean'] >= valitud_e[0]) & (df['E_mean'] <= valitud_e[1])]
+            if valitud_e != (e_min_val, e_max_val):
+                aktiivsed_filtrid.append(f"E_mean: {valitud_e[0]}–{valitud_e[1]} µm")
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
@@ -127,8 +135,8 @@ try:
                     st.write("**Mõõtmisandmed (keskmised):**")
                     p_val = row.get('P_mean', '-')
                     e_val = row.get('E_mean', '-')
-                    st.write(f"📐 **P_mean:** {p_val} µm")
-                    st.write(f"📐 **E_mean:** {e_val} µm")
+                    st.write(f"📐 **Polaartelg (P_mean):** {p_val} µm")
+                    st.write(f"📐 **Ekvatoriaaldiameeter (E_mean):** {e_val} µm")
 
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
