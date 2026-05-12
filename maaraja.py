@@ -65,15 +65,16 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # SEE RIDA TEEB KALD KIRJA: lisame tärnid ainult 'species' veeru ümber
+        # Teeme kaldkirja
         if 'species' in df.columns:
             df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"*{x}*")
 
-        # Tabeli kuvamine
+        # Valime veerud
         naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in naitatavad if v in df.columns]
         
-        st.dataframe(df[olemasolevad], use_container_width=True, hide_index=True)
+        # KASUTAME st.table, see on lollikindlam kaldkirja jaoks
+        st.table(df[olemasolevad])
 
 except Exception as e:
     st.error(f"Viga: {e}")
