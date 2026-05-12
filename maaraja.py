@@ -7,12 +7,11 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
-    # Andmete laadimine (veebis kasutame vaid faili nime)
+    # Andmete laadimine
     df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
     
-    # 2. FILTRITE LOOMINE KATEGOORIATENA (SIDEBAR)
+    # 2. FILTRITE LOOMINE (Kõik expanderid on alguses suletud: expanded=False)
     st.sidebar.header("Määramistunnused")
-    st.sidebar.write("Vali eose tunnused kategooriate kaupa:")
 
     aktiivsed_filtrid = []
 
@@ -32,9 +31,15 @@ try:
     # --- KATEGOORIA: PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
-            if st.sidebar.checkbox("Perispoor puudub", key='perine_absent'):
+            # Kasutaja valib, kas perispoor on olemas
+            perispoor_olemas = st.sidebar.radio("Perispoor:", ["Valimata", "Olemas", "Puudub"], index=0)
+            
+            if perispoor_olemas == "Olemas":
+                df = df[df['perine_absent'] == 0] # Kui perine_absent on 0, siis perispoor on olemas
+                aktiivsed_filtrid.append("Perispoor: Olemas")
+            elif perispoor_olemas == "Puudub":
                 df = df[df['perine_absent'] == 1]
-                aktiivsed_filtrid.append("Perispoor puudub")
+                aktiivsed_filtrid.append("Perispoor: Puudub")
 
     # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
@@ -61,7 +66,7 @@ try:
 
     # --- KATEGOORIA: SUURUS ---
     with st.sidebar.expander("Suurus", expanded=False):
-        st.sidebar.info("Siia saame lisada suuruse filtrid, kui andmed on tabelis olemas.")
+        st.sidebar.write("Suuruse filtrid lisanduvad siia peagi.")
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
@@ -74,25 +79,25 @@ try:
     if vastete_arv == 0:
         st.warning("Selliste tunnustega liike ei leitud. Muuda valikuid.")
     else:
-        # Loome kaldkirjas liiginime veeru kuvamiseks
-        if 'species' in df.columns:
-            df['Liiginimi'] = df['species'].apply(lambda x: f"*{x}*")
-
-        # Kuvame leitud vastete arvu
         st.success(f"Leitud vasteid: {vastete_arv}")
+
+        # Loome veeru, kus on ainult ladinakeelne nimi tärnidega
+        if 'species' in df.columns:
+            df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"*{x}*")
 
         if vastete_arv == 1:
             st.info(f"Tuvastatud liik: **{df.iloc[0]['species']}**")
 
-        # Kuvame tabeli (peidame tehnilised veerud ja näitame kaldkirjas nime)
-        naitatavad_veerud = ['Liiginimi', 'genus', 'family']
-        olemasolevad = [v for v in naitatavad_veerud if v in df.columns]
+        # Näitame tabelit
+        # Võtame kuvamiseks uue 'Liiginimi (ladina k)' veeru
+        naidatavad = ['Liiginimi (ladina k)', 'genus', 'family']
+        olemasolevad = [v for v in naidatavad if v in df.columns]
         
         st.dataframe(
             df[olemasolevad], 
             use_container_width=True,
             column_config={
-                "Liiginimi": st.column_config.TextColumn("Liiginimi (ladina k)")
+                "Liiginimi (ladina k)": st.column_config.TextColumn("Liiginimi (ladina k)")
             },
             hide_index=True 
         )
