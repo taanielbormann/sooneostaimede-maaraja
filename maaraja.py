@@ -66,7 +66,7 @@ try:
     with st.sidebar.expander("Suurus", expanded=False):
         st.write("Suuruse filtrid lisanduvad siia peagi.")
 
-    # 3. TULEMUSTE KUVAMINE PEAALAL
+    # 3. TULEMUSTE KUVAMINE
     st.divider()
     
     if aktiivsed_filtrid:
@@ -79,41 +79,29 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Tekitame kaldkirja veeru HTML-i jaoks
+        # Tekitame kaldkirja uuesti tärnidega, et st.dataframe seda mõistaks
         if 'species' in df.columns:
-            df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"<i>{x}</i>")
+            df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"*{x}*")
 
         if vastete_arv == 1:
             st.info(f"Tuvastatud liik: **{df.iloc[0]['species']}**")
 
-        # Tabeli vormistamine HTML-ina
+        # Näitame tabelit st.dataframe abil, aga kasutame uut konfiguratsiooni
         naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in naitatavad if v in df.columns]
         
-        table_html = df[olemasolevad].to_html(escape=False, index=False)
-        
-        # Kuvame tabeli ja lisame CSS-i, et see näeks korrektne välja
-        st.write(f"""
-            <style>
-                table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 20px;
-                }}
-                th {{
-                    text-align: left;
-                    background-color: #262730;
-                    padding: 10px;
-                    border-bottom: 2px solid #4e4e4e;
-                }}
-                td {{
-                    padding: 10px;
-                    border-bottom: 1px solid #4e4e4e;
-                    text-align: left;
-                }}
-            </style>
-            {table_html}
-        """, unsafe_allow_html=True)
+        st.dataframe(
+            df[olemasolevad],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Liiginimi (ladina k)": st.column_config.TextColumn(
+                    "Liiginimi (ladina k)",
+                    help="Ladinakeelsed nimed on kaldkirjas",
+                    width="large"
+                )
+            }
+        )
 
 except Exception as e:
     st.error(f"Viga: {e}")
