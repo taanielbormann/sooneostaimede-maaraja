@@ -65,16 +65,24 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Teeme kaldkirja
-        if 'species' in df.columns:
-            df['Liiginimi (ladina k)'] = df['species'].apply(lambda x: f"*{x}*")
+        # SEE OSA TEEB TÄPSE KALD KIRJA:
+        # Otsime üles sulud ja paneme tärnid ainult sulgude SISSE
+        def vormista_nimi(nimi):
+            if "(" in nimi and ")" in nimi:
+                eesti, ladina = nimi.split("(", 1)
+                ladina = ladina.replace(")", "")
+                return f"{eesti}(*{ladina}*)"
+            return nimi
 
-        # Valime veerud
+        if 'species' in df.columns:
+            df['Liiginimi (ladina k)'] = df['species'].apply(vormista_nimi)
+
+        # Tabeli kuvamine
         naitatavad = ['Liiginimi (ladina k)', 'genus', 'family']
         olemasolevad = [v for v in naitatavad if v in df.columns]
         
-        # KASUTAME st.table, see on lollikindlam kaldkirja jaoks
-        st.table(df[olemasolevad])
+        # Kasutame st.dataframe, mis on nüüd puhtam
+        st.dataframe(df[olemasolevad], use_container_width=True, hide_index=True)
 
 except Exception as e:
     st.error(f"Viga: {e}")
