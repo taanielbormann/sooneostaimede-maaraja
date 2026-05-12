@@ -54,17 +54,37 @@ try:
                 df = df[df['shape_spherical'] == 1]
                 aktiivsed_filtrid.append("Kuju: Sfääriline")
 
-    # --- KATEGOORIA: PINNASTRUKTUUR ---
+   # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
+        
+        # Eraldame RETIKULAARSE, et lisada sellele pilt
+        if 'surf_reticulate' in df.columns:
+            # Kui sul on Illustratoris tehtud võrgusilma joonis, pane selle tee siia:
+            # st.image("pildid/reticulate.png", width=100) 
+            # Kui pilti veel pole, võid kasutada lihtsalt märkeruutu:
+            if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
+                df = df[df['surf_reticulate'] == 1]
+                aktiivsed_filtrid.append("Pind: Retikulaarne")
+        
+        st.divider()
+        st.write("Muud struktuurid:")
+
+        # Ülejäänud pinnastruktuurid loeteluna
         pind_valikud = {
-            "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
-            "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
-            "Harjaline (cristate)": "surf_cristate", "Retikulaarne (reticulate)": "surf_reticulate",
-            "Kurruline (rugulate)": "surf_rugulate", "Konksuline (hamulate)": "surf_hamulate",
-            "Granulaarne (granulate)": "surf_granulate", "Peenkare (scabrate)": "surf_scabrate",
-            "Sile (psilate)": "surf_psilate", "Auguline (foveolate)": "surf_foveolate",
+            "Ogaline (echinate)": "surf_echinate", 
+            "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate", 
+            "Lohuline (lophate)": "surf_lophate",
+            "Harjaline (cristate)": "surf_cristate", 
+            "Kurruline (rugulate)": "surf_rugulate",
+            "Konksuline (hamulate)": "surf_hamulate", 
+            "Granulaarne (granulate)": "surf_granulate",
+            "Peenkare (scabrate)": "surf_scabrate", 
+            "Sile (psilate)": "surf_psilate",
+            "Auguline (foveolate)": "surf_foveolate", 
             "Voldiline (folded)": "surf_folded"
         }
+        
         for silt, veerg in pind_valikud.items():
             if veerg in df.columns:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
