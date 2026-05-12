@@ -6,10 +6,6 @@ st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon=
 
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
-# Algatame session_state, kui seda veel pole
-if 'filter_kuju' not in st.session_state:
-    st.session_state.filter_kuju = None
-
 try:
     # Andmete laadimine
     df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
@@ -22,31 +18,31 @@ try:
     # --- KATEGOORIA: KUJU ---
     with st.sidebar.expander("Kuju", expanded=True):
         st.write("Vali eose kuju:")
-        col1, col2 = st.columns(2)
         
-        with col1:
-            st.image("pildid/bilateral.png", caption="Bilateraalne", use_container_width=True)
-            if st.button("Vali see", key="btn_bilateral"):
-                st.session_state.filter_kuju = "bilateral"
+        # 1. BILATERAALNE
+        if 'shape_bilateral' in df.columns:
+            st.image("pildid/bilateral.png", width=150)
+            if st.checkbox("Bilateraalne", key="chk_bilateral"):
+                df = df[df['shape_bilateral'] == 1]
+                aktiivsed_filtrid.append("Kuju: Bilateraalne")
         
-        with col2:
-            st.image("pildid/tetra.png", caption="Tetraeedriline", use_container_width=True)
-            if st.button("Vali see", key="btn_tetra"):
-                st.session_state.filter_kuju = "tetra"
-        
-        # Nupp valiku tühistamiseks
-        if st.session_state.filter_kuju:
-            if st.button("Tühista kuju valik"):
-                st.session_state.filter_kuju = None
-                st.rerun()
+        st.divider() # Teeb väikse vahejoone valikute vahele
 
-        # Rakendame filtrid vastavalt "mälule"
-        if st.session_state.filter_kuju == "bilateral":
-            df = df[df['shape_bilateral'] == 1]
-            aktiivsed_filtrid.append("Kuju: Bilateraalne")
-        elif st.session_state.filter_kuju == "tetra":
-            df = df[df['shape_tetra'] == 1]
-            aktiivsed_filtrid.append("Kuju: Tetraeedriline")
+        # 2. TETRAEEDRILINE
+        if 'shape_tetra' in df.columns:
+            st.image("pildid/tetra.png", width=150)
+            if st.checkbox("Tetraeedriline", key="chk_tetra"):
+                df = df[df['shape_tetra'] == 1]
+                aktiivsed_filtrid.append("Kuju: Tetraeedriline")
+
+        st.divider()
+
+        # 3. SFÄÄRILINE (kui sul selle jaoks pilti pole, jääb ainult tekst)
+        if 'shape_spherical' in df.columns:
+            # Kui sul tekib sfäärilise pilt, lisa siia: st.image("pildid/spherical.png", width=150)
+            if st.checkbox("Sfääriline", key="chk_spherical"):
+                df = df[df['shape_spherical'] == 1]
+                aktiivsed_filtrid.append("Kuju: Sfääriline")
 
     # --- KATEGOORIA: PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
@@ -56,7 +52,7 @@ try:
         }
         for silt, veerg in pind_valikud.items():
             if veerg in df.columns:
-                if st.checkbox(silt, key=veerg):
+                if st.checkbox(silt, key=f"surf_{veerg}"):
                     df = df[df[veerg] == 1]
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
