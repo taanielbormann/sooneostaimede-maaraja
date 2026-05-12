@@ -17,6 +17,7 @@ try:
 
     # --- KATEGOORIA: KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
+        st.write("Vali eose kuju:")
         if 'shape_bilateral' in df.columns:
             st.image("pildid/bilateral.png", width=150)
             if st.checkbox("Bilateraalne", key="chk_bilateral"):
@@ -68,45 +69,42 @@ try:
 
     vastete_arv = len(df)
     if vastete_arv == 0:
-        st.warning("Selliste tunnustega liike ei leitud.")
+        st.warning("Selliste tunnustega liike ei leitud. Muuda valikuid.")
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # Funktsioon nime vormistamiseks (kaldkiri ladina nimele)
-        def vormista_kaldkiri(nimi):
+        # Vormistame nime kaldkirja jaoks
+        def vormista_ladina(nimi):
             if isinstance(nimi, str) and "(" in nimi and ")" in nimi:
-                parts = nimi.split("(", 1)
-                return f"{parts[0]} (*{parts[1].replace(')', '').strip()}*)"
-            return nimi
+                eesti, ladina = nimi.split("(", 1)
+                return eesti.strip(), ladina.replace(")", "").strip()
+            return nimi, ""
 
-        # Teeme tabeli andmed valmis
-        df_display = df.copy()
-        if 'species' in df_display.columns:
-            df_display['Liiginimi (ladina k)'] = df_display['species'].apply(vormista_kaldkiri)
-        
-        soovitud = ['Liiginimi (ladina k)', 'genus', 'family']
-        olemasolevad = [v for v in soovitud if v in df_display.columns]
-        
-        # 1. Samm: Näitame tabelit
-        st.table(df_display[olemasolevad])
-
-        # 2. Samm: Detailne vaade piltidega (popover või expander)
-        st.write("### 🔍 Detailne vaade ja fotod")
-        st.info("Kliki liigi nimel, et näha eose fotot ja lisainfot.")
-
+        # Kuvame iga liigi eraldi lahtikäivas paneelis
         for _, row in df.iterrows():
-            # Iga liigi jaoks loome "popover" nupu
-            with st.popover(f"📖 {row['species']}"):
-                st.write(f"**Perekond:** {row.get('genus', 'teadmata')}")
-                st.write(f"**Sugukond:** {row.get('family', 'teadmata')}")
+            eesti_nimi, ladina_nimi = vormista_ladina(row['species'])
+            
+            # Paneeli pealkiri: Eesti nimi ja kaldkirjas ladina nimi
+            pealkiri = f"{eesti_nimi} ({ladina_nimi})" if ladina_nimi else eesti_nimi
+            
+            with st.expander(pealkiri):
+                col_text, col_img = st.columns([1, 1])
                 
-                if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
-                    try:
-                        st.image(row['image_url'], caption=f"Eose foto: {row['species']}", use_container_width=True)
-                    except:
-                        st.warning("Pilti ei leitud failiteelt.")
-                else:
-                    st.write("Selle liigi kohta fotot veel pole.")
+                with col_text:
+                    st.write(f"**Perekond:** {row.get('genus', '-')}")
+                    st.write(f"**Sugukond:** {row.get('family', '-')}")
+                    # Siia saab hiljem lisada ka muud andmed (nt suurus)
+                    if 'size_min' in row and pd.notna(row['size_min']):
+                        st.write(f"**Eose suurus:** {row['size_min']}–{row['size_max']} µm")
+
+                with col_img:
+                    if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
+                        try:
+                            st.image(row['image_url'], use_container_width=True)
+                        except:
+                            st.caption("🖼️ (Foto failitee viga)")
+                    else:
+                        st.caption("📸 Selle liigi fotot veel pole")
 
 except Exception as e:
     st.error(f"Viga: {e}")
