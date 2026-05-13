@@ -9,16 +9,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: SLAIDERID, LOGO JA PAIGUTUS ---
+# --- CSS: SLAIDERID, LOGO JA PILDI PIIRANG ---
 st.markdown("""
     <style>
-    /* Tagame, et põhikonteiner täidaks ekraani, aga ei valguks päris servadesse */
-    .main .block-container {
-        padding-left: 3rem;
-        padding-right: 3rem;
-        max-width: 1200px; /* Suurendasin laiust, et pildid mahuksid */
-    }
-
     [data-testid="stHorizontalBlock"] {
         gap: 1rem !important;
         align-items: center !important;
@@ -30,10 +23,10 @@ st.markdown("""
         padding-top: 10px !important;
     }
 
-    /* Expanderi sisu paigutus */
-    div[data-testid="stExpanderDetails"] {
-        padding: 2rem;
-        background-color: #ffffff;
+    /* MUUDATUS: Piirame eose pildi maksimaalset suurust */
+    [data-testid="stImage"] img {
+        max-width: 400px !important;
+        height: auto !important;
     }
 
     /* SLAIDERI PUHASTUS: Alumiste numbrite peitmine */
@@ -177,8 +170,8 @@ try:
             with st.expander(full_name):
                 st.subheader(full_name)
                 
-                # Kohendatud tulpade suhe (tekst 1.5 korda laiem kui pilt), et mõlemad mahuksid
-                col_text, col_img = st.columns([1.5, 1])
+                # Tekst saab 2 osa ruumi, pilt 1 osa
+                col_text, col_img = st.columns([2, 1])
                 with col_text:
                     st.write("**Eose kirjeldus:**")
                     st.write(row.get('description', 'Kirjeldus puudub.'))
@@ -189,7 +182,6 @@ try:
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
                         try:
-                            # Kasutame pildi tegelikku laiust, et see ei veniks liiga suureks
                             st.image(row['image_url'], use_container_width=True)
                         except:
                             st.caption("📸 Pilti ei leitud")
