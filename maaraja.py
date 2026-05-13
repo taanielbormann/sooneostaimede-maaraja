@@ -20,7 +20,7 @@ st.markdown("""
     
     h1 { 
         color: #2e7d32 !important; 
-        margin-left: -30px !important; /* Toob teksti logole lähemale */
+        margin-left: -30px !important; 
         padding-top: 10px !important;
     }
 
@@ -63,8 +63,9 @@ with col_title:
 
 st.divider()
 
+# --- PÕHIPROTSESS (TRY-EXCEPT PLOKK) ---
 try:
-    # --- ANDMETE LAADIMINE ---
+    # 1. ANDMETE LAADIMINE
     try:
         df = pd.read_csv('Fixed_Spore_Data.csv', encoding='cp1252')
     except:
@@ -76,10 +77,10 @@ try:
         df['description'] = df['description'].str.replace('\x96', '–', regex=True)
         df['description'] = df['description'].str.replace('\xad', '-', regex=True)
 
-    # --- 2. FILTRID KÜLJEPEAL ---
+    # 2. FILTRID KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
     
-    # 2.1 KUJU
+    # --- KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([1, 3])
@@ -104,7 +105,7 @@ try:
                 if st.checkbox("Sfääriline", key="chk_spherical"):
                     df = df[df['shape_spherical'] == 1]
 
-    # 2.2 PERISPOOR
+    # --- PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
             if st.checkbox("Perispoor puudub", key='chk_p_absent'):
@@ -112,7 +113,7 @@ try:
             if st.checkbox("Perispoor olemas", key='chk_p_present'):
                 df = df[df['perine_absent'] == 0]
 
-    # 2.3 PINNASTRUKTUUR
+    # --- PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([1, 3])
@@ -137,7 +138,7 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # 2.4 SUURUS (P ja E)
+    # --- SUURUS SLAIDERID ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
@@ -153,3 +154,30 @@ try:
                 e_min, e_max = float(e_data.min()), float(e_data.max())
                 v_e = st.slider("Ekvatoriaaldiameeter", e_min, e_max, (e_min, e_max), key="s_e", label_visibility="collapsed")
                 df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
+
+    # 3. TULEMUSTE KUVAMINE
+    vastete_arv = len(df)
+    if vastete_arv == 0:
+        st.warning("Valitud tunnustega vasteid ei leitud.")
+    else:
+        st.success(f"Leitud vasteid: {vastete_arv}")
+
+        for _, row in df.iterrows():
+            species_raw = str(row['species'])
+            eesti = species_raw.split("(")[0].strip()
+            
+            with st.expander(eesti):
+                col_text, col_img = st.columns([3, 2])
+                with col_text:
+                    st.write("**Eose kirjeldus:**")
+                    st.write(row.get('description', 'Kirjeldus puudub.'))
+                    st.divider()
+                    st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
+                    st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
+
+                with col_img:
+                    if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
+                        try: st.image(row['image_url'], use_container_width=True)
+                        except: st.caption("📸 Pilti ei leitud")
+
+except Exception
