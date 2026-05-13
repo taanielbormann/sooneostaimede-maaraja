@@ -23,7 +23,7 @@ st.markdown("""
         padding-top: 10px !important;
     }
 
-    /* MUUDATUS: Piirame eose pildi maksimaalset suurust */
+    /* Pildi suuruse piirang */
     [data-testid="stImage"] img {
         max-width: 400px !important;
         height: auto !important;
@@ -48,6 +48,14 @@ st.markdown("""
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
+
+# --- FUNKTSIOON NIMEDE FORMATEERIMISEKS ---
+def format_species_name(raw_name):
+    """Muudab 'Nimi (Ladina nimi)' -> 'Nimi (*Ladina nimi*)'"""
+    if "(" in raw_name and ")" in raw_name:
+        parts = raw_name.split("(")
+        return f"{parts[0].strip()} (*{parts[1].replace(')', '').strip()}*)"
+    return raw_name
 
 # --- PEALKIRI ---
 logo_path = "pildid/fern.png"
@@ -80,7 +88,6 @@ try:
     # 2. FILTRID KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
     
-    # --- KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([4, 1])
@@ -105,7 +112,6 @@ try:
                 try: st.image("pildid/spherical.png")
                 except: st.write("⚪")
 
-    # --- PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
             if st.checkbox("Perispoor puudub", key='chk_p_absent'):
@@ -113,7 +119,6 @@ try:
             if st.checkbox("Perispoor olemas", key='chk_p_present'):
                 df = df[df['perine_absent'] == 0]
 
-    # --- PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([4, 1])
@@ -138,7 +143,7 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # --- SUURUS ---
+    # SUURUSE FILTRID
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
@@ -165,12 +170,14 @@ try:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
         for _, row in df.iterrows():
-            full_name = str(row['species'])
+            raw_name = str(row['species'])
+            formatted_name = format_species_name(raw_name)
             
-            with st.expander(full_name):
-                st.subheader(full_name)
+            # Expanderi päises on nüüd ladina nimi kaldkirjas
+            with st.expander(formatted_name):
+                # Ka sisu päises on ladina nimi kaldkirjas
+                st.markdown(f"### {formatted_name}")
                 
-                # Tekst saab 2 osa ruumi, pilt 1 osa
                 col_text, col_img = st.columns([2, 1])
                 with col_text:
                     st.write("**Eose kirjeldus:**")
