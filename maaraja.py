@@ -4,29 +4,46 @@ import pandas as pd
 # 1. Lehe seadistus
 st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon="🌿", layout="wide")
 
-# --- DISAINI PARANDUSED: PEIDAME TOPELTNUMBRID JA PUNASE VÄRVI ---
+# --- LÕPLIK SLAIDERI VÄLIMUS (CSS) ---
 st.markdown("""
     <style>
     /* Üldine pealkiri */
     h1 { color: #2e7d32 !important; }
     
-    /* Expanderite päised */
-    .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
+    /* 1. ÜLEMISED NUMBRID: Teeme need roheliseks ja loetavaks */
+    div[data-testid="stThumbValue"] { 
+        color: #2e7d32 !important; 
+        font-weight: bold !important;
+        font-size: 14px !important;
+    }
     
-    /* SLAIDERI PUHASTUS: Peidame kõik üleliigsed sildid (punased ja alumised kastid) */
-    div[data-testid="stWidgetLabel"] p { color: #1b5e20 !important; }
-    div[data-testid="stThumbValue"], div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"] { 
+    /* 2. ALUMISED NUMBRID JA KASTID: Peidame täielikult */
+    div[data-testid="stTickBarMin"], 
+    div[data-testid="stTickBarMax"],
+    .st-emotion-cache-1ghh6m9,
+    div[data-baseweb="typo-caption-12"] { 
         display: none !important; 
     }
     
-    /* Slaideri joon ja mummud roheliseks */
-    .stSlider [data-baseweb="slider"] > div > div { background-color: #2e7d32 !important; }
-    div[role="slider"] { background-color: #2e7d32 !important; border-color: #2e7d32 !important; }
-
-    /* Success box */
-    .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+    /* 3. SLAIDERI JOON JA MUMMUD */
+    /* Valitud vahemik kahe mummu vahel roheliseks */
+    .stSlider [data-baseweb="slider"] > div > div { 
+        background-color: #2e7d32 !important; 
+    }
+    /* Slaideri mummud (nupud) */
+    div[role="slider"] { 
+        background-color: #2e7d32 !important; 
+        border: 2px solid #1b5e20 !important; 
+    }
+    
+    /* Expanderite päised */
+    .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
+
+# Pealkiri
+st.title("🌿 Eesti sooneostaimede eoste määraja")
+
 
 # Pealkiri
 st.title("🌿 Eesti sooneostaimede eoste määraja")
