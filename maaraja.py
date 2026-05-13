@@ -63,7 +63,7 @@ with col_title:
 
 st.divider()
 
-# --- PÕHIPROTSESS (TRY-EXCEPT PLOKK) ---
+# --- PÕHIPROTSESS ---
 try:
     # 1. ANDMETE LAADIMINE
     try:
@@ -80,7 +80,7 @@ try:
     # 2. FILTRID KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
     
-    # --- KUJU ---
+    # --- 2.1 KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([1, 3])
@@ -105,7 +105,7 @@ try:
                 if st.checkbox("Sfääriline", key="chk_spherical"):
                     df = df[df['shape_spherical'] == 1]
 
-    # --- PERISPOOR ---
+    # --- 2.2 PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
             if st.checkbox("Perispoor puudub", key='chk_p_absent'):
@@ -113,7 +113,7 @@ try:
             if st.checkbox("Perispoor olemas", key='chk_p_present'):
                 df = df[df['perine_absent'] == 0]
 
-    # --- PINNASTRUKTUUR ---
+    # --- 2.3 PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([1, 3])
@@ -126,19 +126,25 @@ try:
         
         st.divider()
         muud_pinnad = {
-            "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
-            "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
-            "Harjaline (cristate)": "surf_cristate", "Kurruline (rugulate)": "surf_rugulate",
-            "Konksuline (hamulate)": "surf_hamulate", "Granulaarne (granulate)": "surf_granulate",
-            "Peenkare (scabrate)": "surf_scabrate", "Sile (psilate)": "surf_psilate",
-            "Auguline (foveolate)": "surf_foveolate", "Voldiline (folded)": "surf_folded"
+            "Ogaline (echinate)": "surf_echinate", 
+            "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate", 
+            "Lohuline (lophate)": "surf_lophate",
+            "Harjaline (cristate)": "surf_cristate", 
+            "Kurruline (rugulate)": "surf_rugulate",
+            "Konksuline (hamulate)": "surf_hamulate", 
+            "Granulaarne (granulate)": "surf_granulate",
+            "Peenkare (scabrate)": "surf_scabrate", 
+            "Sile (psilate)": "surf_psilate",
+            "Auguline (foveolate)": "surf_foveolate", 
+            "Voldiline (folded)": "surf_folded"
         }
         for silt, veerg in muud_pinnad.items():
             if veerg in df.columns:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # --- SUURUS SLAIDERID ---
+    # --- 2.4 SUURUS ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
@@ -167,17 +173,4 @@ try:
             eesti = species_raw.split("(")[0].strip()
             
             with st.expander(eesti):
-                col_text, col_img = st.columns([3, 2])
-                with col_text:
-                    st.write("**Eose kirjeldus:**")
-                    st.write(row.get('description', 'Kirjeldus puudub.'))
-                    st.divider()
-                    st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
-                    st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
-
-                with col_img:
-                    if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
-                        try: st.image(row['image_url'], use_container_width=True)
-                        except: st.caption("📸 Pilti ei leitud")
-
-except Exception
+                col_text, col_img = st.columns
