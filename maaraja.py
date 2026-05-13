@@ -9,32 +9,31 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: SLAIDERID, LOGO JA KOMPAKTSEM VAADE ---
+# --- CSS: SLAIDERID, LOGO JA PAIGUTUS ---
 st.markdown("""
     <style>
-    /* Üldine sisu laiuse piirang, et ei oleks liiga lai */
+    /* Tagame, et põhikonteiner täidaks ekraani, aga ei valguks päris servadesse */
     .main .block-container {
-        max-width: 1000px;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
+        max-width: 1200px; /* Suurendasin laiust, et pildid mahuksid */
     }
 
     [data-testid="stHorizontalBlock"] {
-        gap: 0rem !important;
+        gap: 1rem !important;
         align-items: center !important;
     }
     
     h1 { 
         color: #2e7d32 !important; 
-        margin-left: -30px !important; 
+        margin-left: -20px !important; 
         padding-top: 10px !important;
     }
 
-    /* Expanderi sisu piiramine ja ilusamaks muutmine */
+    /* Expanderi sisu paigutus */
     div[data-testid="stExpanderDetails"] {
-        padding: 1.5rem;
-        background-color: #fafafa;
-        border-radius: 0 0 10px 10px;
+        padding: 2rem;
+        background-color: #ffffff;
     }
 
     /* SLAIDERI PUHASTUS: Alumiste numbrite peitmine */
@@ -63,7 +62,7 @@ col_logo, col_title = st.columns([1, 10])
 
 with col_logo:
     if os.path.exists(logo_path):
-        st.image(logo_path, width=110)
+        st.image(logo_path, width=100)
     else:
         st.write("🌿")
 
@@ -88,23 +87,24 @@ try:
     # 2. FILTRID KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
     
+    # --- KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
-            c1, c2 = st.columns([3, 1])
+            c1, c2 = st.columns([4, 1])
             with c1: 
                 if st.checkbox("Bilateraalne", key="chk_bilateral"):
                     df = df[df['shape_bilateral'] == 1]
             with c2: st.image("pildid/bilateral.png")
         
         if 'shape_tetra' in df.columns:
-            c1, c2 = st.columns([3, 1])
+            c1, c2 = st.columns([4, 1])
             with c1:
                 if st.checkbox("Tetraeedriline", key="chk_tetra"):
                     df = df[df['shape_tetra'] == 1]
             with c2: st.image("pildid/tetra.png")
 
         if 'shape_spherical' in df.columns:
-            c1, c2 = st.columns([3, 1])
+            c1, c2 = st.columns([4, 1])
             with c1:
                 if st.checkbox("Sfääriline", key="chk_spherical"):
                     df = df[df['shape_spherical'] == 1]
@@ -112,6 +112,7 @@ try:
                 try: st.image("pildid/spherical.png")
                 except: st.write("⚪")
 
+    # --- PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
             if st.checkbox("Perispoor puudub", key='chk_p_absent'):
@@ -119,9 +120,10 @@ try:
             if st.checkbox("Perispoor olemas", key='chk_p_present'):
                 df = df[df['perine_absent'] == 0]
 
+    # --- PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
-            c1, c2 = st.columns([3, 1])
+            c1, c2 = st.columns([4, 1])
             with c1:
                 if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
                     df = df[df['surf_reticulate'] == 1]
@@ -143,6 +145,7 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
+    # --- SUURUS ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
@@ -174,7 +177,8 @@ try:
             with st.expander(full_name):
                 st.subheader(full_name)
                 
-                col_text, col_img = st.columns([3, 2])
+                # Kohendatud tulpade suhe (tekst 1.5 korda laiem kui pilt), et mõlemad mahuksid
+                col_text, col_img = st.columns([1.5, 1])
                 with col_text:
                     st.write("**Eose kirjeldus:**")
                     st.write(row.get('description', 'Kirjeldus puudub.'))
@@ -184,8 +188,11 @@ try:
 
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
-                        try: st.image(row['image_url'], use_container_width=True)
-                        except: st.caption("📸 Pilti ei leitud")
+                        try:
+                            # Kasutame pildi tegelikku laiust, et see ei veniks liiga suureks
+                            st.image(row['image_url'], use_container_width=True)
+                        except:
+                            st.caption("📸 Pilti ei leitud")
 
 except Exception as e:
     st.error(f"Viga rakenduse töös: {e}")
