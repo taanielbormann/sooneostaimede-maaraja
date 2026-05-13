@@ -4,6 +4,19 @@ import pandas as pd
 # 1. Lehe seadistus
 st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon="🌿", layout="wide")
 
+# --- ROHELINE DISAIN (CSS) ---
+st.markdown("""
+    <style>
+    /* Pealkirja värv */
+    h1 { color: #2e7d32 ! distaste; }
+    /* Expanderite päised */
+    .st-emotion-cache-p4m61c { color: #1b5e20; font-weight: bold; }
+    /* Märkeruudud ja sliderid roheliseks */
+    span[data-baseweb="checkbox"] > div { background-color: #2e7d32 !important; }
+    .stSlider [data-baseweb="slider"] div { background-color: #2e7d32 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
@@ -24,8 +37,9 @@ try:
     st.sidebar.header("Määramistunnused")
     aktiivsed_filtrid = []
 
-    # --- 1. KUJU ---
+    # --- 1. KUJU (Nüüd sfääriline tagasi!) ---
     with st.sidebar.expander("Kuju", expanded=False):
+        # Bilateraalne
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: st.image("pildid/bilateral.png")
@@ -34,6 +48,7 @@ try:
                     df = df[df['shape_bilateral'] == 1]
                     aktiivsed_filtrid.append("Kuju: Bilateraalne")
         
+        # Tetraeedriline
         if 'shape_tetra' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: st.image("pildid/tetra.png")
@@ -41,6 +56,17 @@ try:
                 if st.checkbox("Tetraeedriline", key="chk_tetra"):
                     df = df[df['shape_tetra'] == 1]
                     aktiivsed_filtrid.append("Kuju: Tetraeedriline")
+
+        # Sfääriline (Tagasi ja pildivalmidusega)
+        if 'shape_spherical' in df.columns:
+            c1, c2 = st.columns([1, 3])
+            with c1: 
+                try: st.image("pildid/spherical.png")
+                except: st.write("⚪")
+            with c2:
+                if st.checkbox("Sfääriline", key="chk_spherical"):
+                    df = df[df['shape_spherical'] == 1]
+                    aktiivsed_filtrid.append("Kuju: Sfääriline")
 
     # --- 2. PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
@@ -80,7 +106,6 @@ try:
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
     # --- 4. SUURUS (P ja E) ---
-    # Parandus: hoiame alles liigid, kellel andmed puuduvad (nt võtmeheinad)
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (P_mean µm)", expanded=False):
             p_data = df['P_mean'].dropna()
@@ -105,20 +130,17 @@ try:
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
-        # DETAILNE VAADE
         for _, row in df.iterrows():
-            # NIMEVORMISTUS
             species_raw = row['species']
             if "(" in species_raw:
                 eesti, ladina = species_raw.split("(", 1)
                 ladina = ladina.replace(")", "").strip()
-                pealkiri_valjas = eesti.strip() # Ainult eestikeelne nimi paneeli peal
+                pealkiri_valjas = eesti.strip()
             else:
                 pealkiri_valjas = species_raw
                 ladina = None
 
             with st.expander(pealkiri_valjas):
-                # Paneeli SEES kuvame täisnime koos kaldkirjas ladinakeelse nimega
                 if ladina:
                     st.markdown(f"### {pealkiri_valjas} *({ladina})*")
                 else:
