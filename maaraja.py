@@ -4,25 +4,31 @@ import pandas as pd
 # 1. Lehe seadistus
 st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon="🌿", layout="wide")
 
-# --- PARANDATUD ROHELINE DISAIN (CSS) ---
+# --- PARANDATUD DISAIN: ROHELISED SLAIDERID JA NUMBRID ---
 st.markdown("""
     <style>
     /* Üldine pealkiri */
     h1 { color: #2e7d32 !important; }
     
-    /* Expanderite päised roheliseks ja paksuks */
+    /* Expanderite päised */
     .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
     
-    /* Slideri värvid korda - et numbrid ei oleks punased/valusad */
-    .stSlider [data-baseweb="slider"] { margin-bottom: 25px; }
-    div[data-testid="stThumbValue"] { color: #2e7d32 !important; font-weight: bold; }
-    div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"] { color: #555 !important; }
+    /* SLAIDERI STIIL: Numbrid ja nupud pealkirja roheliseks */
+    /* See eemaldab punase tooni ja asendab selle #2e7d32-ga */
+    div[data-testid="stThumbValue"] { color: #2e7d32 !important; font-weight: bold !important; }
+    div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"] { color: #2e7d32 !important; }
     
-    /* Eduka teavituse (vastete arv) roheline toon */
+    /* Slaideri aktiivne riba roheliseks */
+    .stSlider [data-baseweb="slider"] > div > div { background-color: #2e7d32 !important; }
+    /* Slaideri nupud (mummud) roheliseks */
+    div[role="slider"] { background-color: #2e7d32 !important; border-color: #2e7d32 !important; }
+
+    /* Success box (Leitud vasteid) disain */
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
+# Pealkiri koos sõnajala-emojiga
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
@@ -34,7 +40,7 @@ try:
     
     df.columns = df.columns.str.strip()
     
-    # PUHASTAME KIRJELDUSED (Mõttekriipsud korda)
+    # PUHASTAME KIRJELDUSED
     if 'description' in df.columns:
         df['description'] = df['description'].str.replace('\x96', '–', regex=True)
         df['description'] = df['description'].str.replace('\xad', '-', regex=True)
@@ -45,7 +51,6 @@ try:
 
     # --- 1. KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
-        # Bilateraalne
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: st.image("pildid/bilateral.png")
@@ -54,7 +59,6 @@ try:
                     df = df[df['shape_bilateral'] == 1]
                     aktiivsed_filtrid.append("Kuju: Bilateraalne")
         
-        # Tetraeedriline
         if 'shape_tetra' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: st.image("pildid/tetra.png")
@@ -63,7 +67,6 @@ try:
                     df = df[df['shape_tetra'] == 1]
                     aktiivsed_filtrid.append("Kuju: Tetraeedriline")
 
-        # Sfääriline (Tagasi ja tulpades!)
         if 'shape_spherical' in df.columns:
             c1, c2 = st.columns([1, 3])
             with c1: 
@@ -112,13 +115,12 @@ try:
                     aktiivsed_filtrid.append(f"Pind: {silt}")
 
     # --- 4. SUURUS (P ja E) ---
-    # Slaiderid, mis ei "plahvata" roheliseks vaid on viisakad
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (P_mean µm)", expanded=False):
             p_data = df['P_mean'].dropna()
             if not p_data.empty:
                 p_min, p_max = float(p_data.min()), float(p_data.max())
-                v_p = st.slider("Vali vahemik", p_min, p_max, (p_min, p_max), key="s_p")
+                v_p = st.slider("P-vahemik", p_min, p_max, (p_min, p_max), key="s_p")
                 df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
 
     if 'E_mean' in df.columns:
@@ -126,14 +128,14 @@ try:
             e_data = df['E_mean'].dropna()
             if not e_data.empty:
                 e_min, e_max = float(e_data.min()), float(e_data.max())
-                v_e = st.slider("Vali vahemik", e_min, e_max, (e_min, e_max), key="s_e")
+                v_e = st.slider("E-vahemik", e_min, e_max, (e_min, e_max), key="s_e")
                 df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
 
     # 3. TULEMUSTE KUVAMINE
     st.divider()
     vastete_arv = len(df)
     if vastete_arv == 0:
-        st.warning("Ühtegi vastet ei leitud valitud filtritega.")
+        st.warning("Vasteid ei leitud.")
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
@@ -169,4 +171,4 @@ try:
                         st.caption("📸 Foto puudub")
 
 except Exception as e:
-    st.error(f"Süsteemne viga: {e}")
+    st.error(f"Viga: {e}")
