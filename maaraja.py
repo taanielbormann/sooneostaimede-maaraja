@@ -9,9 +9,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: SLAIDERID, LOGO JA KOMPAKTSEM SISU ---
+# --- CSS: SLAIDERID, LOGO JA KOMPAKTSEM VAADE ---
 st.markdown("""
     <style>
+    /* Üldine sisu laiuse piirang, et ei oleks liiga lai */
+    .main .block-container {
+        max-width: 1000px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
     [data-testid="stHorizontalBlock"] {
         gap: 0rem !important;
         align-items: center !important;
@@ -23,10 +30,11 @@ st.markdown("""
         padding-top: 10px !important;
     }
 
-    /* MUUDATUS: Muudab avaneva akna sisu kitsamaks */
+    /* Expanderi sisu piiramine ja ilusamaks muutmine */
     div[data-testid="stExpanderDetails"] {
-        max-width: 95%; /* Võid seda numbrit vähendada (nt 80%), et akent veelgi koomale tõmmata */
-        margin: 0 auto;
+        padding: 1.5rem;
+        background-color: #fafafa;
+        border-radius: 0 0 10px 10px;
     }
 
     /* SLAIDERI PUHASTUS: Alumiste numbrite peitmine */
@@ -80,7 +88,6 @@ try:
     # 2. FILTRID KÜLJEPEAL
     st.sidebar.header("Määramistunnused")
     
-    # --- KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
             c1, c2 = st.columns([3, 1])
@@ -105,7 +112,6 @@ try:
                 try: st.image("pildid/spherical.png")
                 except: st.write("⚪")
 
-    # --- PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
         if 'perine_absent' in df.columns:
             if st.checkbox("Perispoor puudub", key='chk_p_absent'):
@@ -113,7 +119,6 @@ try:
             if st.checkbox("Perispoor olemas", key='chk_p_present'):
                 df = df[df['perine_absent'] == 0]
 
-    # --- PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([3, 1])
@@ -138,7 +143,6 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # --- SUURUS ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
