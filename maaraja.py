@@ -159,11 +159,12 @@ try:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
         for _, row in df.iterrows():
-            # Parandatud liiginime kuvamine
             full_name = str(row['species'])
-            eesti_nimi = full_name.split("(")[0].strip()
             
-            with st.expander(full_name): # Kuvab päises kogu nime
+            with st.expander(full_name):
+                # Lisame liiginime ka sisu sisse päise alla
+                st.subheader(full_name)
+                
                 col_text, col_img = st.columns([3, 2])
                 with col_text:
                     st.write("**Eose kirjeldus:**")
