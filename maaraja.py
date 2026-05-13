@@ -144,12 +144,15 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # --- 2.4 SUURUS ---
+    # --- 2.4 SUURUS (PARANDATUD VEAKINDLUS) ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
             if not p_data.empty:
                 p_min, p_max = float(p_data.min()), float(p_data.max())
+                if p_min == p_max:
+                    p_min -= 1.0
+                    p_max += 1.0
                 v_p = st.slider("Polaartelg", p_min, p_max, (p_min, p_max), key="s_p", label_visibility="collapsed")
                 df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
 
@@ -158,6 +161,9 @@ try:
             e_data = df['E_mean'].dropna()
             if not e_data.empty:
                 e_min, e_max = float(e_data.min()), float(e_data.max())
+                if e_min == e_max:
+                    e_min -= 1.0
+                    e_max += 1.0
                 v_e = st.slider("Ekvatoriaaldiameeter", e_min, e_max, (e_min, e_max), key="s_e", label_visibility="collapsed")
                 df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
 
