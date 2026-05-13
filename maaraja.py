@@ -4,7 +4,7 @@ import pandas as pd
 # 1. Lehe seadistus
 st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon="🌿", layout="wide")
 
-# --- PARANDATUD DISAIN: ROHELISED SLAIDERID JA NUMBRID ---
+# --- DISAINI PARANDUSED: PEIDAME TOPELTNUMBRID JA PUNASE VÄRVI ---
 st.markdown("""
     <style>
     /* Üldine pealkiri */
@@ -13,22 +13,22 @@ st.markdown("""
     /* Expanderite päised */
     .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
     
-    /* SLAIDERI STIIL: Numbrid ja nupud pealkirja roheliseks */
-    /* See eemaldab punase tooni ja asendab selle #2e7d32-ga */
-    div[data-testid="stThumbValue"] { color: #2e7d32 !important; font-weight: bold !important; }
-    div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"] { color: #2e7d32 !important; }
+    /* SLAIDERI PUHASTUS: Peidame kõik üleliigsed sildid (punased ja alumised kastid) */
+    div[data-testid="stWidgetLabel"] p { color: #1b5e20 !important; }
+    div[data-testid="stThumbValue"], div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"] { 
+        display: none !important; 
+    }
     
-    /* Slaideri aktiivne riba roheliseks */
+    /* Slaideri joon ja mummud roheliseks */
     .stSlider [data-baseweb="slider"] > div > div { background-color: #2e7d32 !important; }
-    /* Slaideri nupud (mummud) roheliseks */
     div[role="slider"] { background-color: #2e7d32 !important; border-color: #2e7d32 !important; }
 
-    /* Success box (Leitud vasteid) disain */
+    /* Success box */
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
-# Pealkiri koos sõnajala-emojiga
+# Pealkiri
 st.title("🌿 Eesti sooneostaimede eoste määraja")
 
 try:
@@ -116,19 +116,19 @@ try:
 
     # --- 4. SUURUS (P ja E) ---
     if 'P_mean' in df.columns:
-        with st.sidebar.expander("Polaartelg (P_mean µm)", expanded=False):
+        with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
             if not p_data.empty:
                 p_min, p_max = float(p_data.min()), float(p_data.max())
-                v_p = st.slider("P-vahemik", p_min, p_max, (p_min, p_max), key="s_p")
+                v_p = st.slider("P-vahemik", p_min, p_max, (p_min, p_max), key="s_p", help=f"Vahemik: {p_min} - {p_max}")
                 df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
 
     if 'E_mean' in df.columns:
-        with st.sidebar.expander("Ekvatoriaaldiameeter (E_mean µm)", expanded=False):
+        with st.sidebar.expander("Ekvatoriaaldiameeter (µm)", expanded=False):
             e_data = df['E_mean'].dropna()
             if not e_data.empty:
                 e_min, e_max = float(e_data.min()), float(e_data.max())
-                v_e = st.slider("E-vahemik", e_min, e_max, (e_min, e_max), key="s_e")
+                v_e = st.slider("E-vahemik", e_min, e_max, (e_min, e_max), key="s_e", help=f"Vahemik: {e_min} - {e_max}")
                 df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
 
     # 3. TULEMUSTE KUVAMINE
@@ -160,8 +160,9 @@ try:
                     st.write("**Eose kirjeldus:**")
                     st.write(row.get('description', 'Kirjeldus puudub.'))
                     st.divider()
-                    st.write(f"📐 **P_mean:** {row.get('P_mean', '-')} µm")
-                    st.write(f"📐 **E_mean:** {row.get('E_mean', '-')} µm")
+                    # Siin on muudatus: (P_mean) ja (E_mean) on eemaldatud
+                    st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
+                    st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
 
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
