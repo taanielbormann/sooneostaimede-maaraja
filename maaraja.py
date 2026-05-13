@@ -9,11 +9,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: SLAIDERID JA PEALKIRJA POSITSIOON ---
+# --- CSS: SLAIDERID, LOGO JA DISAIN ---
 st.markdown("""
     <style>
-    /* 1. PEALKIRJA JA LOGO LÄHENDAMINE */
-    /* Kaotame tulpade vahelise tühiku ja joondame sisu */
+    /* 1. PEALKIRJA JA LOGO JOONDUS */
     [data-testid="stHorizontalBlock"] {
         gap: 0rem !important;
         align-items: center !important;
@@ -21,11 +20,11 @@ st.markdown("""
     
     h1 { 
         color: #2e7d32 !important; 
-        margin-left: -20px !important; /* Toob teksti pildile lähemale */
-        padding-top: 0px !important;
+        margin-left: -30px !important; /* Toob teksti logole lähemale */
+        padding-top: 10px !important;
     }
 
-    /* 2. SLAIDERI PUHASTUS: Peidame ainult alumised numbrid ja kastid */
+    /* 2. SLAIDERI PUHASTUS: Peidame alumised numbrid ja kastid */
     div[data-testid="stTickBarMin"], 
     div[data-testid="stTickBarMax"],
     div[data-baseweb="typo-caption-12"],
@@ -36,24 +35,26 @@ st.markdown("""
         display: none !important; 
     }
     
-    /* Tagame, et ülemised väärtused (punased/rohelised) jäävad nähtavale */
+    /* Ülemised numbrid (punased) jäävad alles */
     div[data-testid="stThumbValue"] { 
         font-weight: bold !important;
     }
 
-    /* Expanderite päised küljel */
+    /* Külgpaneeli expanderite pealkirjad */
     .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
+    
+    /* Vastete kasti stiil */
+    .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
 # --- PEALKIRI KOOS LOGOGA ---
 logo_path = "pildid/fern.png"
-# Muutsime suhet [1, 10], et pealkiri ei oleks surutud kaugele paremale
 col_logo, col_title = st.columns([1, 10]) 
 
 with col_logo:
     if os.path.exists(logo_path):
-        st.image(logo_path, width=120)
+        st.image(logo_path, width=110)
     else:
         st.write("🌿")
 
@@ -71,26 +72,80 @@ try:
     
     df.columns = df.columns.str.strip()
     
-    # --- FILTRID KÜLJEPEAL ---
+    if 'description' in df.columns:
+        df['description'] = df['description'].str.replace('\x96', '–', regex=True)
+        df['description'] = df['description'].str.replace('\xad', '-', regex=True)
+
+    # --- 2. FILTRID KÜLJEPEAL ---
     st.sidebar.header("Määramistunnused")
     
-    # Kuju, Perispoor ja Pinnastruktuur (standardne kood)
+    # 2.1 KUJU
     with st.sidebar.expander("Kuju", expanded=False):
-        # ... (siin on sinu olemasolev kuju valiku kood) ...
-        pass
+        if 'shape_bilateral' in df.columns:
+            c1, c2 = st.columns([1, 3])
+            with c1: st.image("pildid/bilateral.png")
+            with c2: 
+                if st.checkbox("Bilateraalne", key="chk_bilateral"):
+                    df = df[df['shape_bilateral'] == 1]
+        
+        if 'shape_tetra' in df.columns:
+            c1, c2 = st.columns([1, 3])
+            with c1: st.image("pildid/tetra.png")
+            with c2:
+                if st.checkbox("Tetraeedriline", key="chk_tetra"):
+                    df = df[df['shape_tetra'] == 1]
 
-    # --- SUURUSE SLAIDERID ---
-    # Polaartelg
+        if 'shape_spherical' in df.columns:
+            c1, c2 = st.columns([1, 3])
+            with c1: 
+                try: st.image("pildid/spherical.png")
+                except: st.write("⚪")
+            with c2:
+                if st.checkbox("Sfääriline", key="chk_spherical"):
+                    df = df[df['shape_spherical'] == 1]
+
+    # 2.2 PERISPOOR
+    with st.sidebar.expander("Perispoor", expanded=False):
+        if 'perine_absent' in df.columns:
+            if st.checkbox("Perispoor puudub", key='chk_p_absent'):
+                df = df[df['perine_absent'] == 1]
+            if st.checkbox("Perispoor olemas", key='chk_p_present'):
+                df = df[df['perine_absent'] == 0]
+
+    # 2.3 PINNASTRUKTUUR
+    with st.sidebar.expander("Pinnastruktuur", expanded=False):
+        if 'surf_reticulate' in df.columns:
+            c1, c2 = st.columns([1, 3])
+            with c1:
+                try: st.image("pildid/reticulate.png")
+                except: st.write("🕸️")
+            with c2:
+                if st.checkbox("Retikulaarne", key="chk_surf_reticulate"):
+                    df = df[df['surf_reticulate'] == 1]
+        
+        st.divider()
+        muud_pinnad = {
+            "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
+            "Harjaline (cristate)": "surf_cristate", "Kurruline (rugulate)": "surf_rugulate",
+            "Konksuline (hamulate)": "surf_hamulate", "Granulaarne (granulate)": "surf_granulate",
+            "Peenkare (scabrate)": "surf_scabrate", "Sile (psilate)": "surf_psilate",
+            "Auguline (foveolate)": "surf_foveolate", "Voldiline (folded)": "surf_folded"
+        }
+        for silt, veerg in muud_pinnad.items():
+            if veerg in df.columns:
+                if st.checkbox(silt, key=f"chk_{veerg}"):
+                    df = df[df[veerg] == 1]
+
+    # 2.4 SUURUS (P ja E)
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
             if not p_data.empty:
                 p_min, p_max = float(p_data.min()), float(p_data.max())
-                # label_visibility="collapsed" eemaldab slaideri sisese sildi, hoides vaate puhtana
                 v_p = st.slider("Polaartelg", p_min, p_max, (p_min, p_max), key="s_p", label_visibility="collapsed")
                 df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
 
-    # Ekvatoriaaldiameeter
     if 'E_mean' in df.columns:
         with st.sidebar.expander("Ekvatoriaaldiameeter (µm)", expanded=False):
             e_data = df['E_mean'].dropna()
@@ -98,19 +153,3 @@ try:
                 e_min, e_max = float(e_data.min()), float(e_data.max())
                 v_e = st.slider("Ekvatoriaaldiameeter", e_min, e_max, (e_min, e_max), key="s_e", label_visibility="collapsed")
                 df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
-
-    # --- TULEMUSTE KUVAMINE ---
-    vastete_arv = len(df)
-    st.success(f"Leitud vasteid: {vastete_arv}")
-
-    for _, row in df.iterrows():
-        species_raw = str(row['species'])
-        eesti = species_raw.split("(")[0].strip()
-        with st.expander(eesti):
-            st.write(row.get('description', 'Kirjeldus puudub.'))
-            st.write(f"📐 Polaartelg: {row.get('P_mean', '-')} µm")
-            st.write(f"📐 Ekvatoriaaldiameeter: {row.get('E_mean', '-')} µm")
-
-except Exception as e:
-    st.error(f"Viga: {e}")
-    
