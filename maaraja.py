@@ -1,16 +1,20 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Lehe seadistus
-st.set_page_config(page_title="Eesti sooneostaimede eoste määraja", page_icon="🌿", layout="wide")
+# 1. LEHE SEADISTUS
+st.set_page_config(
+    page_title="Eesti sooneostaimede eoste määraja", 
+    page_icon="🌿", 
+    layout="wide"
+)
 
-# --- LÕPLIK SLAIDERI VÄLIMUS (CSS) ---
+# --- DISAINI PARANDUSED (CSS) ---
 st.markdown("""
     <style>
     /* Üldine pealkiri */
-    h1 { color: #2e7d32 !important; }
+    h1 { color: #2e7d32 !important; padding-top: 0px; }
     
-    /* 1. ÜLEMISED NUMBRID: Teeme need roheliseks ja loetavaks */
+    /* 1. ÜLEMISED NUMBRID: Roheliseks ja loetavaks */
     div[data-testid="stThumbValue"] { 
         color: #2e7d32 !important; 
         font-weight: bold !important;
@@ -20,36 +24,48 @@ st.markdown("""
     /* 2. ALUMISED NUMBRID JA KASTID: Peidame täielikult */
     div[data-testid="stTickBarMin"], 
     div[data-testid="stTickBarMax"],
-    .st-emotion-cache-1ghh6m9,
-    div[data-baseweb="typo-caption-12"] { 
+    [data-testid="stMetricValue"],
+    .st-emotion-cache-1ghh6m9, 
+    div[data-baseweb="typo-caption-12"],
+    div[data-testid="stWidgetLabel"] + div div[data-baseweb="block"] { 
         display: none !important; 
     }
     
     /* 3. SLAIDERI JOON JA MUMMUD */
-    /* Valitud vahemik kahe mummu vahel roheliseks */
     .stSlider [data-baseweb="slider"] > div > div { 
         background-color: #2e7d32 !important; 
     }
-    /* Slaideri mummud (nupud) */
     div[role="slider"] { 
         background-color: #2e7d32 !important; 
         border: 2px solid #1b5e20 !important; 
     }
-    
-    /* Expanderite päised */
+
+    /* Expanderite päised küljepaneelil */
     .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
+    
+    /* Success box (vastete arv) */
+    .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
-# Pealkiri
-st.title("🌿 Eesti sooneostaimede eoste määraja")
+# --- PEALKIRI KOOS LOGOGA ---
+col_logo, col_title = st.columns([1, 6]) 
 
+with col_logo:
+    try:
+        # Eeldame, et pilt on GitHubis nimega 'fern.png'
+        st.image("fern.png", width=120) 
+    except:
+        st.write("🌿") 
 
-# Pealkiri
-st.title("🌿 Eesti sooneostaimede eoste määraja")
+with col_title:
+    st.markdown("<div style='padding-top: 20px;'></div>", unsafe_allow_html=True)
+    st.title("Eesti sooneostaimede eoste määraja")
+
+st.divider()
 
 try:
-    # ANDMETE LAADIMINE
+    # --- ANDMETE LAADIMINE ---
     try:
         df = pd.read_csv('Fixed_Spore_Data.csv', encoding='cp1252')
     except:
@@ -57,12 +73,12 @@ try:
     
     df.columns = df.columns.str.strip()
     
-    # PUHASTAME KIRJELDUSED
+    # Puhastame kirjeldused sümbolitest
     if 'description' in df.columns:
         df['description'] = df['description'].str.replace('\x96', '–', regex=True)
         df['description'] = df['description'].str.replace('\xad', '-', regex=True)
 
-    # 2. FILTRITE LOOMINE KÜLJEPEAL
+    # --- 2. FILTRITE LOOMINE KÜLJEPEAL ---
     st.sidebar.header("Määramistunnused")
     aktiivsed_filtrid = []
 
@@ -137,7 +153,8 @@ try:
             p_data = df['P_mean'].dropna()
             if not p_data.empty:
                 p_min, p_max = float(p_data.min()), float(p_data.max())
-                v_p = st.slider("P-vahemik", p_min, p_max, (p_min, p_max), key="s_p", help=f"Vahemik: {p_min} - {p_max}")
+                v_p = st.slider("P-vahemik", p_min, p_max, (p_min, p_max), key="s_p")
+                # Filtreerimine nii, et säiliksid ka liigid, kellel andmeid pole (NaN)
                 df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
 
     if 'E_mean' in df.columns:
@@ -145,19 +162,18 @@ try:
             e_data = df['E_mean'].dropna()
             if not e_data.empty:
                 e_min, e_max = float(e_data.min()), float(e_data.max())
-                v_e = st.slider("E-vahemik", e_min, e_max, (e_min, e_max), key="s_e", help=f"Vahemik: {e_min} - {e_max}")
+                v_e = st.slider("E-vahemik", e_min, e_max, (e_min, e_max), key="s_e")
                 df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
 
-    # 3. TULEMUSTE KUVAMINE
-    st.divider()
+    # --- 3. TULEMUSTE KUVAMINE ---
     vastete_arv = len(df)
     if vastete_arv == 0:
-        st.warning("Vasteid ei leitud.")
+        st.warning("Valitud tunnustega vasteid ei leitud.")
     else:
         st.success(f"Leitud vasteid: {vastete_arv}")
 
         for _, row in df.iterrows():
-            species_raw = row['species']
+            species_raw = str(row['species'])
             if "(" in species_raw:
                 eesti, ladina = species_raw.split("(", 1)
                 ladina = ladina.replace(")", "").strip()
@@ -177,16 +193,17 @@ try:
                     st.write("**Eose kirjeldus:**")
                     st.write(row.get('description', 'Kirjeldus puudub.'))
                     st.divider()
-                    # Siin on muudatus: (P_mean) ja (E_mean) on eemaldatud
                     st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
                     st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
 
                 with col_img:
                     if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
-                        try: st.image(row['image_url'], use_container_width=True)
-                        except: st.caption("📸 Pilti ei saa kuvada")
+                        try:
+                            st.image(row['image_url'], use_container_width=True)
+                        except:
+                            st.caption("📸 Pilti ei leitud")
                     else:
                         st.caption("📸 Foto puudub")
 
 except Exception as e:
-    st.error(f"Viga: {e}")
+    st.error(f"Süsteemne viga: {e}")
