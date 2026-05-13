@@ -9,36 +9,38 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- JÕULINE CSS: SLAIDERID, LOGO JA VÄRVID ---
+# --- ÜLIJUHTIV CSS PUNASTE NUMBRITE ALISTAMISEKS ---
 st.markdown("""
     <style>
     /* Üldine pealkiri */
-    h1 { color: #2e7d32 !important; padding-top: 10px !important; }
+    h1 { color: #2e7d32 !important; }
     
-    /* 1. PEIDAME KÕIK ALUMISED NUMBRID, KASTID JA VAHEMIKUD */
+    /* 1. PEIDAME KÕIK ALUMISED NUMBRID JA KASTID (kõik võimalikud klassid) */
     div[data-testid="stTickBarMin"], 
     div[data-testid="stTickBarMax"],
     div[data-baseweb="typo-caption-12"],
-    [data-testid="stMetricValue"],
     .st-emotion-cache-1ghh6m9, 
     .st-emotion-cache-16idsys,
-    .st-emotion-cache-p5mre8 { 
+    .st-emotion-cache-p5mre8,
+    .st-emotion-cache-1kyf5f6 { 
         display: none !important; 
     }
     
-    /* 2. ÜLEMISED NUMBRID: Muudame punase roheliseks */
-    div[data-testid="stThumbValue"] { 
+    /* 2. ÜLEMISED NUMBRID: Roheliseks (isegi kui Streamlit tahab punast) */
+    div[data-testid="stThumbValue"], 
+    div[data-testid="stThumbValue"] > div { 
         color: #2e7d32 !important; 
         font-weight: bold !important;
-        font-size: 14px !important;
     }
 
-    /* 3. SLAIDERI JOON: Eemaldame punase ja asendame rohelisega */
-    /* See sihib joont mummude vahel */
-    div[data-baseweb="slider"] > div > div { 
+    /* 3. SLAIDERI JOON: Punase asendamine rohelisega */
+    /* See osa sihib aktiivset vahemikku */
+    div[data-baseweb="slider"] > div > div,
+    div[role="slider"] + div { 
         background-color: #2e7d32 !important; 
     }
-    /* See sihib mummusid ehk nuppe */
+    
+    /* Slaideri mummud (nupud) */
     div[role="slider"] { 
         background-color: #2e7d32 !important; 
         border: 2px solid #1b5e20 !important; 
@@ -49,25 +51,25 @@ st.markdown("""
         align-items: center !important;
     }
 
-    /* Expanderite päised küljel */
+    /* Expanderite päised */
     .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
-    
-    /* Success box */
-    .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
 # --- PEALKIRI KOOS LOGOGA ---
-# Kui pilt on GitHubis nimega fern.png, siis kontrollime seda
-logo_path = "fern.png"
+# Kuna ütlesid, et logo on kaustas 'pildid'
+logo_path = "pildid/fern.png"
 col_logo, col_title = st.columns([1, 6]) 
 
 with col_logo:
     if os.path.exists(logo_path):
         st.image(logo_path, width=150)
     else:
-        # Kui pilti pole, siis kuvame suurema sümboli, et koht poleks tühi
-        st.markdown("<h1 style='text-align: center;'>🌿</h1>", unsafe_allow_html=True)
+        # Proovime igaks juhuks ka ilma kausta nimeta, kui tee on vale
+        if os.path.exists("fern.png"):
+            st.image("fern.png", width=150)
+        else:
+            st.markdown("<h1 style='text-align: center;'>🌿</h1>", unsafe_allow_html=True)
 
 with col_title:
     st.title("Eesti sooneostaimede eoste määraja")
@@ -148,13 +150,12 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # SUURUS (Slaiderid, kus peitsime sildid)
+    # SUURUS
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
             if not p_data.empty:
                 p_min, p_max = float(p_data.min()), float(p_data.max())
-                # label_visibility="collapsed" aitab topelttekste vältida
                 v_p = st.slider("Polaartelg", p_min, p_max, (p_min, p_max), key="s_p", label_visibility="collapsed")
                 df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
 
@@ -176,18 +177,15 @@ try:
         for _, row in df.iterrows():
             species_raw = str(row['species'])
             if "(" in species_raw:
-                eesti, ladina = species_raw.split("(", 1)
-                ladina = ladina.replace(")", "").strip()
-                pealkiri_valjas = eesti.strip()
+                parts = species_raw.split("(", 1)
+                eesti = parts[0].strip()
+                ladina = parts[1].replace(")", "").strip()
             else:
-                pealkiri_valjas = species_raw
+                eesti = species_raw
                 ladina = None
 
-            with st.expander(pealkiri_valjas):
-                if ladina:
-                    st.markdown(f"### {pealkiri_valjas} *({ladina})*")
-                else:
-                    st.markdown(f"### {pealkiri_valjas}")
+            with st.expander(eesti):
+                st.markdown(f"### {eesti} " + (f"*({ladina})*" if ladina else ""))
                 
                 col_text, col_img = st.columns([3, 2])
                 with col_text:
