@@ -83,27 +83,27 @@ try:
     # --- 2.1 KUJU ---
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
-            c1, c2 = st.columns([1, 3])
-            with c1: st.image("pildid/bilateral.png")
-            with c2: 
+            c1, c2 = st.columns([3, 1])
+            with c1: 
                 if st.checkbox("Bilateraalne", key="chk_bilateral"):
                     df = df[df['shape_bilateral'] == 1]
+            with c2: st.image("pildid/bilateral.png")
         
         if 'shape_tetra' in df.columns:
-            c1, c2 = st.columns([1, 3])
-            with c1: st.image("pildid/tetra.png")
-            with c2:
+            c1, c2 = st.columns([3, 1])
+            with c1:
                 if st.checkbox("Tetraeedriline", key="chk_tetra"):
                     df = df[df['shape_tetra'] == 1]
+            with c2: st.image("pildid/tetra.png")
 
         if 'shape_spherical' in df.columns:
-            c1, c2 = st.columns([1, 3])
-            with c1: 
-                try: st.image("pildid/spherical.png")
-                except: st.write("⚪")
-            with c2:
+            c1, c2 = st.columns([3, 1])
+            with c1:
                 if st.checkbox("Sfääriline", key="chk_spherical"):
                     df = df[df['shape_spherical'] == 1]
+            with c2:
+                try: st.image("pildid/spherical.png")
+                except: st.write("⚪")
 
     # --- 2.2 PERISPOOR ---
     with st.sidebar.expander("Perispoor", expanded=False):
@@ -116,13 +116,14 @@ try:
     # --- 2.3 PINNASTRUKTUUR ---
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
-            c1, c2 = st.columns([1, 3])
+            # Retikulaarne pilt paremal ja tekstis (reticulate)
+            c1, c2 = st.columns([3, 1])
             with c1:
+                if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
+                    df = df[df['surf_reticulate'] == 1]
+            with c2:
                 try: st.image("pildid/reticulate.png")
                 except: st.write("🕸️")
-            with c2:
-                if st.checkbox("Retikulaarne", key="chk_surf_reticulate"):
-                    df = df[df['surf_reticulate'] == 1]
         
         st.divider()
         muud_pinnad = {
@@ -144,7 +145,7 @@ try:
                 if st.checkbox(silt, key=f"chk_{veerg}"):
                     df = df[df[veerg] == 1]
 
-    # --- 2.4 SUURUS (PARANDATUD VEAKINDLUS) ---
+    # --- 2.4 SUURUS ---
     if 'P_mean' in df.columns:
         with st.sidebar.expander("Polaartelg (µm)", expanded=False):
             p_data = df['P_mean'].dropna()
