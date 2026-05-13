@@ -173,4 +173,20 @@ try:
             eesti = species_raw.split("(")[0].strip()
             
             with st.expander(eesti):
-                col_text, col_img = st.columns
+                col_text, col_img = st.columns([3, 2])
+                with col_text:
+                    st.write("**Eose kirjeldus:**")
+                    st.write(row.get('description', 'Kirjeldus puudub.'))
+                    st.divider()
+                    st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
+                    st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
+
+                with col_img:
+                    if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
+                        try:
+                            st.image(row['image_url'], use_container_width=True)
+                        except:
+                            st.caption("📸 Pilti ei leitud")
+
+except Exception as e:
+    st.error(f"Viga rakenduse töös: {e}")
