@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: SLAIDERID, LOGO JA DISAIN ---
+# --- CSS: SLAIDERID, LOGO JA KOMPAKTSEM SISU ---
 st.markdown("""
     <style>
     [data-testid="stHorizontalBlock"] {
@@ -21,6 +21,12 @@ st.markdown("""
         color: #2e7d32 !important; 
         margin-left: -30px !important; 
         padding-top: 10px !important;
+    }
+
+    /* MUUDATUS: Muudab avaneva akna sisu kitsamaks */
+    div[data-testid="stExpanderDetails"] {
+        max-width: 95%; /* Võid seda numbrit vähendada (nt 80%), et akent veelgi koomale tõmmata */
+        margin: 0 auto;
     }
 
     /* SLAIDERI PUHASTUS: Alumiste numbrite peitmine */
@@ -162,7 +168,6 @@ try:
             full_name = str(row['species'])
             
             with st.expander(full_name):
-                # Lisame liiginime ka sisu sisse päise alla
                 st.subheader(full_name)
                 
                 col_text, col_img = st.columns([3, 2])
