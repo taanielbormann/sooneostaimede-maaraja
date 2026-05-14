@@ -95,6 +95,7 @@ with col_title:
     st.title(t["title"])
 
 with col_lang:
+    # Värviliste lippudega valik
     options_map = {"Eesti": "🇪🇪 Eesti", "English": "🇬🇧 English"}
     current_label = options_map.get(st.session_state.lang, "🇪🇪 Eesti")
     
