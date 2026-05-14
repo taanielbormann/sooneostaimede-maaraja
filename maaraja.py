@@ -33,7 +33,7 @@ t = {
         "e_label": "Ekvatoriaaldiameeter"
     },
     "English": {
-        "title": "Estonian Spore Identifier",
+        "title": "Estonian Pteridophyte Spore Identifier",
         "sidebar_head": "Identification Keys",
         "shape": "Shape",
         "perine": "Perispore",
