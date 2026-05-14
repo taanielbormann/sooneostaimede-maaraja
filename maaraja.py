@@ -95,7 +95,6 @@ def format_species_name(raw_name):
     return raw_str
 
 # --- 6. PÄIS JA KEELEVALIK ---
-# Loome kolm tulpa: logo, pealkiri ja keelevalik
 col_logo, col_title, col_lang = st.columns([1, 8, 2], vertical_alignment="center")
 
 with col_logo:
@@ -108,16 +107,21 @@ with col_title:
     st.title(t["title"])
 
 with col_lang:
-    # Keelevaliku nupp paremal üleval
-    chosen_lang = st.selectbox(
+    # Lisame lipud valikusse
+    options = {"Eesti": "🇪🇪 Eesti", "English": "🇬🇧 English"}
+    
+    chosen_label = st.selectbox(
         "Language", 
-        ["Eesti", "English"], 
+        options=list(options.values()), 
         index=0 if st.session_state.lang == "Eesti" else 1,
         label_visibility="collapsed"
     )
-    # Kui kasutaja vahetab keelt, uuendame seisundit ja laeme lehe uuesti
-    if chosen_lang != st.session_state.lang:
-        st.session_state.lang = chosen_lang
+    
+    # Leiame võtme (Eesti või English) vastavalt valitud sildile
+    new_lang = "Eesti" if chosen_label == "🇪🇪 Eesti" else "English"
+    
+    if new_lang != st.session_state.lang:
+        st.session_state.lang = new_lang
         st.rerun()
 
 st.divider()
