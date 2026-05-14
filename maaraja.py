@@ -13,7 +13,7 @@ st.set_page_config(
 if 'lang' not in st.session_state:
     st.session_state.lang = "Eesti"
 
-# --- 3. TÕLKED ---
+# --- 3. TÕLKED JA PEALKIRJAD ---
 t = {
     "Eesti": {
         "title": "Eesti sooneostaimede eoste määraja",
@@ -56,22 +56,10 @@ st.markdown("""
     <style>
     [data-testid="stHorizontalBlock"] { gap: 1.5rem !important; align-items: center !important; }
     h1 { color: #2e7d32 !important; font-size: 2.2rem !important; }
-    
-    /* Peapildi suurus ja piirang */
-    [data-testid="stImage"] img {
-        max-width: 450px !important;
-        border-radius: 8px;
-    }
-    
-    /* Külgmenüü pildid suuremaks */
-    [data-testid="stSidebar"] [data-testid="stImage"] img {
-        max-width: 100% !important;
-    }
-
-    /* Slaiderite puhastus */
+    [data-testid="stImage"] img { max-width: 450px !important; border-radius: 8px; }
+    [data-testid="stSidebar"] [data-testid="stImage"] img { max-width: 100% !important; }
     div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"],
     div[data-baseweb="typo-caption-12"], .st-emotion-cache-1ghh6m9 { display: none !important; }
-    
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
@@ -107,12 +95,7 @@ with col_title:
     st.title(t["title"])
 
 with col_lang:
-    # Siin on värviliste lippudega valik
-    options_map = {
-        "Eesti": "🇪🇪 Eesti", 
-        "English": "🇬🇧 English"
-    }
-    
+    options_map = {"Eesti": "🇪🇪 Eesti", "English": "🇬🇧 English"}
     current_label = options_map.get(st.session_state.lang, "🇪🇪 Eesti")
     
     chosen_label = st.selectbox(
@@ -123,7 +106,6 @@ with col_lang:
     )
     
     new_lang = "Eesti" if "🇪🇪" in chosen_label else "English"
-    
     if new_lang != st.session_state.lang:
         st.session_state.lang = new_lang
         st.rerun()
@@ -196,4 +178,18 @@ try:
         for _, row in df.iterrows():
             f_name = format_species_name(row['species'])
             with st.expander(f_name):
-                st.markdown(f"### {f_
+                st.markdown(f"### {f_name}")
+                col_text, col_img = st.columns([2, 1], gap="large")
+                with col_text:
+                    st.write(f"**{t['desc']}:**")
+                    st.write(row.get('description', t['none']))
+                    st.divider()
+                    st.write(f"📐 **{t['p_label']}:** {row.get('P_mean', '-')} µm")
+                    st.write(f"📐 **{t['e_label']}:** {row.get('E_mean', '-')} µm")
+                with col_img:
+                    if pd.notna(row.get('image_url')) and str(row['image_url']).strip() != "":
+                        try: st.image(row['image_url'], use_container_width=True)
+                        except: st.caption("📸 N/A")
+
+except Exception as e:
+    st.error(f"Viga / Error: {e}")
