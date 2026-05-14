@@ -9,31 +9,37 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: DISAINI PARANDUSED ---
+# --- CSS: SLAIDERID, LOGO JA VÄLIMUS ---
 st.markdown("""
     <style>
-    .main .block-container {
-        padding-top: 2rem;
-        max-width: 1200px;
+    [data-testid="stHorizontalBlock"] {
+        gap: 2rem !important;
     }
+    
     h1 { 
         color: #2e7d32 !important; 
     }
-    /* Pildi suuruse kontroll, et see ei veniks */
+
+    /* Pildi suuruse piiramine */
     [data-testid="stImage"] img {
-        max-width: 400px !important;
-        border-radius: 8px;
+        max-width: 450px !important;
+        height: auto !important;
+        border-radius: 10px;
     }
-    /* Slaiderite visuaalne puhastus */
-    div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"],
-    div[data-baseweb="typo-caption-12"], .st-emotion-cache-1ghh6m9 { 
+
+    /* Slaiderite puhastus (numbrite peitmine) */
+    div[data-testid="stTickBarMin"], 
+    div[data-testid="stTickBarMax"],
+    div[data-baseweb="typo-caption-12"],
+    .st-emotion-cache-1ghh6m9 { 
         display: none !important; 
     }
+    
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- ANDMETE LAADIMINE (VAHEMÄLUS) ---
+# --- FUNKTSIOONID ---
 @st.cache_data
 def load_data():
     file_path = 'Fixed_Spore_Data.csv'
@@ -47,18 +53,19 @@ def load_data():
         data['description'] = data['description'].str.replace('\x96', '–', regex=True).str.replace('\xad', '-', regex=True)
     return data
 
-def format_name(name):
-    name_str = str(name)
-    if "(" in name_str:
-        parts = name_str.split("(")
+def format_species_name(raw_name):
+    raw_str = str(raw_name)
+    if "(" in raw_str and ")" in raw_str:
+        parts = raw_str.split("(")
         return f"{parts[0].strip()} (*{parts[1].replace(')', '').strip()}*)"
-    return name_str
+    return raw_str
 
-# --- PÄIS ---
-col_logo, col_title = st.columns([1, 8]) 
+# --- PEALKIRI ---
+logo_path = "pildid/fern.png"
+col_logo, col_title = st.columns([1, 10]) 
 with col_logo:
-    if os.path.exists("pildid/fern.png"):
-        st.image("pildid/fern.png", width=80)
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=80)
     else:
         st.write("🌿")
 with col_title:
@@ -73,55 +80,79 @@ try:
     # --- SIDEBAR: FILTRID ---
     st.sidebar.header("Määramistunnused")
     
-    # KUJU
+    # 1. KUJU
     with st.sidebar.expander("Kuju", expanded=False):
         if 'shape_bilateral' in df.columns:
-            c1, c2 = st.columns([3, 1])
-            if c1.checkbox("Bilateraalne", key="c_bil"): df = df[df['shape_bilateral'] == 1]
+            c1, c2 = st.columns([4, 1])
+            if c1.checkbox("Bilateraalne", key="chk_bilat"): df = df[df['shape_bilateral'] == 1]
             if os.path.exists("pildid/bilateral.png"): c2.image("pildid/bilateral.png")
-            
+        
         if 'shape_tetra' in df.columns:
-            c1, c2 = st.columns([3, 1])
-            if c1.checkbox("Tetraeedriline", key="c_tet"): df = df[df['shape_tetra'] == 1]
+            c1, c2 = st.columns([4, 1])
+            if c1.checkbox("Tetraeedriline", key="chk_tetra"): df = df[df['shape_tetra'] == 1]
             if os.path.exists("pildid/tetra.png"): c2.image("pildid/tetra.png")
 
-    # PINNASTRUKTUUR
+    # 2. PERISPOOR
+    with st.sidebar.expander("Perispoor", expanded=False):
+        if 'perine_absent' in df.columns:
+            if st.checkbox("Perispoor puudub", key='p_abs'): df = df[df['perine_absent'] == 1]
+            if st.checkbox("Perispoor olemas", key='p_pres'): df = df[df['perine_absent'] == 0]
+
+    # 3. PINNASTRUKTUUR
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
         if 'surf_reticulate' in df.columns:
-            c1, c2 = st.columns([3, 1])
-            if c1.checkbox("Retikulaarne", key="c_ret"): df = df[df['surf_reticulate'] == 1]
+            c1, c2 = st.columns([4, 1])
+            if c1.checkbox("Retikulaarne (reticulate)", key="chk_retic"): df = df[df['surf_reticulate'] == 1]
             if os.path.exists("pildid/reticulate.png"): c2.image("pildid/reticulate.png")
         
         st.divider()
-        muud = {"Ogaline": "surf_echinate", "Tüükaline": "surf_verrucate", "Konksuline": "surf_hamulate", "Sile": "surf_psilate"}
-        for silt, veerg in muud.items():
-            if veerg in df.columns:
-                if st.checkbox(silt, key=f"ch_{veerg}"): df = df[df[veerg] == 1]
+        muud_pinnad = {
+            "Ogaline (echinate)": "surf_echinate", 
+            "Peeneogaline (microechinate)": "surf_microechinate",
+            "Tüükaline (verrucate)": "surf_verrucate", 
+            "Konksuline (hamulate)": "surf_hamulate",
+            "Sile (psilate)": "surf_psilate",
+            "Kurruline (rugulate)": "surf_rugulate",
+            "Harjaline (cristate)": "surf_cristate"
+        }
+        for silt, veerg in muud_pinnad.items():
+            if veerg in df.columns and st.checkbox(silt, key=f"chk_{veerg}"):
+                df = df[df[veerg] == 1]
 
-    # SUURUS
+    # 4. SUURUSED
     if 'P_mean' in df.columns:
-        with st.sidebar.expander("Polaartelg (P)", expanded=False):
-            p_val = st.slider("P µm", float(df_full['P_mean'].min()), float(df_full['P_mean'].max()), 
-                             (float(df_full['P_mean'].min()), float(df_full['P_mean'].max())), key="s_p")
-            df = df[df['P_mean'].between(p_val[0], p_val[1])]
+        with st.sidebar.expander("Polaartelg (µm)", expanded=False):
+            p_min, p_max = float(df_full['P_mean'].min()), float(df_full['P_mean'].max())
+            v_p = st.slider("P", p_min, p_max, (p_min, p_max), key="s_p")
+            df = df[df['P_mean'].between(v_p[0], v_p[1])]
+
+    if 'E_mean' in df.columns:
+        with st.sidebar.expander("Ekvatoriaaldiameeter (µm)", expanded=False):
+            e_min, e_max = float(df_full['E_mean'].min()), float(df_full['E_mean'].max())
+            v_e = st.slider("E", e_min, e_max, (e_min, e_max), key="s_e")
+            df = df[df['E_mean'].between(v_e[0], v_e[1])]
 
     # --- TULEMUSED ---
-    if len(df) == 0:
-        st.warning("Vasteid ei leitud.")
+    vastete_arv = len(df)
+    if vastete_arv == 0:
+        st.warning("Valitud tunnustega vasteid ei leitud.")
     else:
-        st.success(f"Leitud vasteid: {len(df)}")
+        st.success(f"Leitud vasteid: {vastete_arv}")
         for _, row in df.iterrows():
-            display_name = format_name(row['species'])
-            with st.expander(display_name):
-                st.markdown(f"### {display_name}")
-                col1, col2 = st.columns([2, 1], gap="medium")
-                with col1:
+            f_name = format_species_name(row['species'])
+            with st.expander(f_name):
+                st.markdown(f"### {f_name}")
+                col_text, col_img = st.columns([2, 1])
+                with col_text:
                     st.write("**Eose kirjeldus:**")
                     st.write(row.get('description', 'Kirjeldus puudub.'))
-                    st.write(f"📐 **P:** {row.get('P_mean', '-')} µm | **E:** {row.get('E_mean', '-')} µm")
-                with col2:
+                    st.divider()
+                    # Siin on P ja E üksteise all
+                    st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
+                    st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
+                with col_img:
                     if pd.notna(row.get('image_url')):
                         st.image(row['image_url'], use_container_width=True)
 
 except Exception as e:
-    st.error(f"Viga: {e}")
+    st.error(f"Viga rakenduse töös: {e}")
