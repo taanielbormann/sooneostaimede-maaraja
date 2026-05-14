@@ -172,4 +172,4 @@ try:
                         except: st.caption("📸 N/A")
 
 except Exception as e:
-    st.error(f"Error
+    st.error(f"Error: {e}")
