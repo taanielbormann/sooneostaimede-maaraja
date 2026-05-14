@@ -9,11 +9,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. KEELEVALIK ---
-# Lisame valiku kohe algusesse, et saaksime seda tekstides kasutada
-lang = st.sidebar.radio("Keel / Language", ["Eesti", "English"], index=0)
+# --- 2. KEELE SEISUNDI HALDUS ---
+if 'lang' not in st.session_state:
+    st.session_state.lang = "Eesti"
 
-# Sõnastik kasutajaliidese tekstide jaoks
+# --- 3. TÕLKED ---
 t = {
     "Eesti": {
         "title": "Eesti sooneostaimede eoste määraja",
@@ -33,7 +33,7 @@ t = {
         "e_label": "Ekvatoriaaldiameeter"
     },
     "English": {
-        "title": "Estonian Vascular Plant Spore Identifier",
+        "title": "Estonian Spore Identifier",
         "sidebar_head": "Identification Keys",
         "shape": "Shape",
         "perine": "Perispore",
@@ -49,21 +49,34 @@ t = {
         "p_label": "Polar axis",
         "e_label": "Equatorial diameter"
     }
-}[lang]
+}[st.session_state.lang]
 
-# --- 3. CSS VÄLIMUSE JAOKS ---
+# --- 4. CSS DISAIN ---
 st.markdown("""
     <style>
-    [data-testid="stHorizontalBlock"] { gap: 2rem !important; }
-    h1 { color: #2e7d32 !important; }
-    [data-testid="stImage"] img { max-width: 450px !important; border-radius: 8px; }
+    [data-testid="stHorizontalBlock"] { gap: 1.5rem !important; align-items: center !important; }
+    h1 { color: #2e7d32 !important; font-size: 2.5rem !important; }
+    
+    /* Peapildi suurus ja piirang */
+    [data-testid="stImage"] img {
+        max-width: 450px !important;
+        border-radius: 8px;
+    }
+    
+    /* Külgmenüü pildid */
+    [data-testid="stSidebar"] [data-testid="stImage"] img {
+        max-width: 100% !important;
+    }
+
+    /* Slaiderite puhastus */
     div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"],
     div[data-baseweb="typo-caption-12"], .st-emotion-cache-1ghh6m9 { display: none !important; }
+    
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FUNKTSIOONID ---
+# --- 5. ANDMETE LAADIMINE ---
 @st.cache_data
 def load_data():
     file_path = 'Fixed_Spore_Data.csv'
@@ -81,24 +94,43 @@ def format_species_name(raw_name):
         return f"{parts[0].strip()} (*{parts[1].replace(')', '').strip()}*)"
     return raw_str
 
-# --- 5. PEALKIRI ---
-col_logo, col_title = st.columns([1, 10]) 
+# --- 6. PÄIS JA KEELEVALIK ---
+# Loome kolm tulpa: logo, pealkiri ja keelevalik
+col_logo, col_title, col_lang = st.columns([1, 8, 2], vertical_alignment="center")
+
 with col_logo:
-    if os.path.exists("pildid/fern.png"): st.image("pildid/fern.png", width=80)
-    else: st.write("🌿")
+    if os.path.exists("pildid/fern.png"):
+        st.image("pildid/fern.png", width=80)
+    else:
+        st.write("🌿")
+
 with col_title:
     st.title(t["title"])
 
+with col_lang:
+    # Keelevaliku nupp paremal üleval
+    chosen_lang = st.selectbox(
+        "Language", 
+        ["Eesti", "English"], 
+        index=0 if st.session_state.lang == "Eesti" else 1,
+        label_visibility="collapsed"
+    )
+    # Kui kasutaja vahetab keelt, uuendame seisundit ja laeme lehe uuesti
+    if chosen_lang != st.session_state.lang:
+        st.session_state.lang = chosen_lang
+        st.rerun()
+
 st.divider()
 
-# --- 6. PÕHIPROGRAMM ---
+# --- 7. PÕHIPROGRAMM ---
 try:
     df_full = load_data()
     df = df_full.copy()
 
+    # SIDEBAR: FILTRID
     st.sidebar.header(t["sidebar_head"])
     
-    # --- KUJU ---
+    # KUJU
     with st.sidebar.expander(t["shape"], expanded=False):
         shapes = [("shape_bilateral", "Bilateraalne", "Bilateral", "bilateral.png"),
                   ("shape_tetra", "Tetraeedriline", "Tetrahedral", "tetra.png"),
@@ -106,21 +138,21 @@ try:
         for col, et, en, img in shapes:
             if col in df.columns:
                 c1, c2 = st.columns([2, 1], vertical_alignment="center")
-                label = et if lang == "Eesti" else en
+                label = et if st.session_state.lang == "Eesti" else en
                 if c1.checkbox(label, key=f"chk_{col}"): df = df[df[col] == 1]
                 if os.path.exists(f"pildid/{img}"): c2.image(f"pildid/{img}", use_container_width=True)
 
-    # --- PERISPOOR ---
+    # PERISPOOR
     with st.sidebar.expander(t["perine"], expanded=False):
         if 'perine_absent' in df.columns:
             if st.checkbox(t["p_absent"], key='p_abs'): df = df[df['perine_absent'] == 1]
             if st.checkbox(t["p_present"], key='p_pres'): df = df[df['perine_absent'] == 0]
 
-    # --- PINNASTRUKTUUR ---
+    # PINNASTRUKTUUR
     with st.sidebar.expander(t["surface"], expanded=False):
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([2, 1], vertical_alignment="center")
-            label = "Retikulaarne" if lang == "Eesti" else "Reticulate"
+            label = "Retikulaarne" if st.session_state.lang == "Eesti" else "Reticulate"
             if c1.checkbox(label, key="chk_retic"): df = df[df['surf_reticulate'] == 1]
             if os.path.exists("pildid/reticulate.png"): c2.image("pildid/reticulate.png", use_container_width=True)
         
@@ -134,7 +166,7 @@ try:
         for silt, veerg in muud_pinnad.items():
             if veerg in df.columns and st.checkbox(silt, key=f"chk_{veerg}"): df = df[df[veerg] == 1]
 
-    # --- SUURUSED ---
+    # SUURUSED (P ja E)
     if 'P_mean' in df.columns:
         p_data = df_full['P_mean'].dropna()
         if not p_data.empty:
@@ -161,15 +193,14 @@ try:
                 col_text, col_img = st.columns([2, 1], gap="large")
                 with col_text:
                     st.write(f"**{t['desc']}:**")
-                    # Kui tulevikus on CSV-s ka 'description_en', saab siin valida
                     st.write(row.get('description', t['none']))
                     st.divider()
                     st.write(f"📐 **{t['p_label']}:** {row.get('P_mean', '-')} µm")
                     st.write(f"📐 **{t['e_label']}:** {row.get('E_mean', '-')} µm")
                 with col_img:
-                    if pd.notna(row.get('image_url')):
+                    if pd.notna(row.get('image_url')) and str(row['image_url']).strip() != "":
                         try: st.image(row['image_url'], use_container_width=True)
                         except: st.caption("📸 N/A")
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Viga / Error: {e}")
