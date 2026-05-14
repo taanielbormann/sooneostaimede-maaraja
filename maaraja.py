@@ -9,189 +9,109 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS: SLAIDERID, LOGO JA PILDI PIIRANG ---
+# --- CSS: DISAIN JA KOMPAKTSUS ---
 st.markdown("""
     <style>
     [data-testid="stHorizontalBlock"] {
-        gap: 1rem !important;
-        align-items: center !important;
+        align-items: start !important;
     }
     
     h1 { 
         color: #2e7d32 !important; 
         margin-left: -20px !important; 
-        padding-top: 10px !important;
     }
 
-    /* Pildi suuruse piirang */
+    /* Pildi suuruse kontroll */
     [data-testid="stImage"] img {
-        max-width: 400px !important;
+        max-width: 100% !important;
         height: auto !important;
+        border-radius: 8px;
     }
 
-    /* SLAIDERI PUHASTUS: Alumiste numbrite peitmine */
-    div[data-testid="stTickBarMin"], 
-    div[data-testid="stTickBarMax"],
-    div[data-baseweb="typo-caption-12"],
-    .st-emotion-cache-1ghh6m9, 
-    .st-emotion-cache-16idsys,
-    .st-emotion-cache-p5mre8,
-    .st-emotion-cache-1kyf5f6 { 
+    /* Slaiderite puhastus */
+    div[data-testid="stTickBarMin"], div[data-testid="stTickBarMax"],
+    div[data-baseweb="typo-caption-12"], .st-emotion-cache-1ghh6m9 { 
         display: none !important; 
     }
     
-    div[data-testid="stThumbValue"] { 
-        font-weight: bold !important;
-    }
-
-    .st-emotion-cache-p4m61c p { color: #1b5e20 !important; font-weight: bold !important; }
     .stSuccess { background-color: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNKTSIOON NIMEDE FORMATEERIMISEKS ---
-def format_species_name(raw_name):
-    """Muudab 'Nimi (Ladina nimi)' -> 'Nimi (*Ladina nimi*)'"""
-    if "(" in raw_name and ")" in raw_name:
-        parts = raw_name.split("(")
+# --- ANDMETE LAADIMINE (CACHE) ---
+@st.cache_data
+def load_data():
+    file_path = 'Fixed_Spore_Data.csv'
+    try:
+        data = pd.read_csv(file_path, encoding='cp1252')
+    except:
+        data = pd.read_csv(file_path, encoding='latin-1')
+    
+    data.columns = data.columns.str.strip()
+    if 'description' in data.columns:
+        data['description'] = data['description'].str.replace('\x96', '–', regex=True).str.replace('\xad', '-', regex=True)
+    return data
+
+def format_name(name):
+    if "(" in str(name):
+        parts = name.split("(")
         return f"{parts[0].strip()} (*{parts[1].replace(')', '').strip()}*)"
-    return raw_name
+    return name
 
-# --- PEALKIRI ---
-logo_path = "pildid/fern.png"
+# --- PÄIS ---
 col_logo, col_title = st.columns([1, 10]) 
-
 with col_logo:
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=100)
-    else:
-        st.write("🌿")
-
+    st.image("pildid/fern.png", width=90) if os.path.exists("pildid/fern.png") else st.write("🌿")
 with col_title:
     st.title("Eesti sooneostaimede eoste määraja")
 
 st.divider()
 
 try:
-    # 1. ANDMETE LAADIMINE
-    try:
-        df = pd.read_csv('Fixed_Spore_Data.csv', encoding='cp1252')
-    except:
-        df = pd.read_csv('Fixed_Spore_Data.csv', encoding='latin-1')
-    
-    df.columns = df.columns.str.strip()
-    
-    if 'description' in df.columns:
-        df['description'] = df['description'].str.replace('\x96', '–', regex=True)
-        df['description'] = df['description'].str.replace('\xad', '-', regex=True)
+    df = load_data().copy()
 
-    # 2. FILTRID KÜLJEPEAL
+    # --- SIDEBAR FILTRID ---
     st.sidebar.header("Määramistunnused")
     
     with st.sidebar.expander("Kuju", expanded=False):
-        if 'shape_bilateral' in df.columns:
-            c1, c2 = st.columns([4, 1])
-            with c1: 
-                if st.checkbox("Bilateraalne", key="chk_bilateral"):
-                    df = df[df['shape_bilateral'] == 1]
-            with c2: st.image("pildid/bilateral.png")
-        
-        if 'shape_tetra' in df.columns:
-            c1, c2 = st.columns([4, 1])
-            with c1:
-                if st.checkbox("Tetraeedriline", key="chk_tetra"):
-                    df = df[df['shape_tetra'] == 1]
-            with c2: st.image("pildid/tetra.png")
-
-        if 'shape_spherical' in df.columns:
-            c1, c2 = st.columns([4, 1])
-            with c1:
-                if st.checkbox("Sfääriline", key="chk_spherical"):
-                    df = df[df['shape_spherical'] == 1]
-            with c2:
-                try: st.image("pildid/spherical.png")
-                except: st.write("⚪")
-
-    with st.sidebar.expander("Perispoor", expanded=False):
-        if 'perine_absent' in df.columns:
-            if st.checkbox("Perispoor puudub", key='chk_p_absent'):
-                df = df[df['perine_absent'] == 1]
-            if st.checkbox("Perispoor olemas", key='chk_p_present'):
-                df = df[df['perine_absent'] == 0]
+        for shape, img in [("shape_bilateral", "bilateral.png"), ("shape_tetra", "tetra.png")]:
+            if shape in df.columns:
+                c1, c2 = st.columns([4, 1])
+                if c1.checkbox(shape.split('_')[1].capitalize(), key=f"chk_{shape}"):
+                    df = df[df[shape] == 1]
+                if os.path.exists(f"pildid/{img}"): c2.image(f"pildid/{img}")
 
     with st.sidebar.expander("Pinnastruktuur", expanded=False):
+        # Retikulaarne esiletooduna
         if 'surf_reticulate' in df.columns:
             c1, c2 = st.columns([4, 1])
-            with c1:
-                if st.checkbox("Retikulaarne (reticulate)", key="chk_surf_reticulate"):
-                    df = df[df['surf_reticulate'] == 1]
-            with c2:
-                try: st.image("pildid/reticulate.png")
-                except: st.write("🕸️")
+            if c1.checkbox("Retikulaarne", key="chk_retic"): df = df[df['surf_reticulate'] == 1]
+            if os.path.exists("pildid/reticulate.png"): c2.image("pildid/reticulate.png")
         
         st.divider()
-        muud_pinnad = {
-            "Ogaline (echinate)": "surf_echinate", "Peeneogaline (microechinate)": "surf_microechinate",
-            "Tüükaline (verrucate)": "surf_verrucate", "Lohuline (lophate)": "surf_lophate",
-            "Harjaline (cristate)": "surf_cristate", "Kurruline (rugulate)": "surf_rugulate",
-            "Konksuline (hamulate)": "surf_hamulate", "Granulaarne (granulate)": "surf_granulate",
-            "Peenkare (scabrate)": "surf_scabrate", "Sile (psilate)": "surf_psilate",
-            "Auguline (foveolate)": "surf_foveolate", "Voldiline (folded)": "surf_folded"
-        }
-        for silt, veerg in muud_pinnad.items():
-            if veerg in df.columns:
-                if st.checkbox(silt, key=f"chk_{veerg}"):
-                    df = df[df[veerg] == 1]
-
-    # SUURUSE FILTRID
-    if 'P_mean' in df.columns:
-        with st.sidebar.expander("Polaartelg (µm)", expanded=False):
-            p_data = df['P_mean'].dropna()
-            if not p_data.empty:
-                p_min, p_max = float(p_data.min()), float(p_data.max())
-                if p_min == p_max: p_min -= 1.0; p_max += 1.0
-                v_p = st.slider("P", p_min, p_max, (p_min, p_max), key="s_p", label_visibility="collapsed")
-                df = df[(df['P_mean'].between(v_p[0], v_p[1])) | (df['P_mean'].isna())]
-
-    if 'E_mean' in df.columns:
-        with st.sidebar.expander("Ekvatoriaaldiameeter (µm)", expanded=False):
-            e_data = df['E_mean'].dropna()
-            if not e_data.empty:
-                e_min, e_max = float(e_data.min()), float(e_data.max())
-                if e_min == e_max: e_min -= 1.0; e_max += 1.0
-                v_e = st.slider("E", e_min, e_max, (e_min, e_max), key="s_e", label_visibility="collapsed")
-                df = df[(df['E_mean'].between(v_e[0], v_e[1])) | (df['E_mean'].isna())]
+        surfaces = {"Ogaline": "surf_echinate", "Tüükaline": "surf_verrucate", "Konksuline": "surf_hamulate", "Sile": "surf_psilate"}
+        for label, col in surfaces.items():
+            if col in df.columns and st.checkbox(label, key=f"chk_{col}"):
+                df = df[df[col] == 1]
 
     # --- TULEMUSED ---
-    vastete_arv = len(df)
-    if vastete_arv == 0:
-        st.warning("Valitud tunnustega vasteid ei leitud.")
+    if len(df) == 0:
+        st.warning("Vasteid ei leitud.")
     else:
-        st.success(f"Leitud vasteid: {vastete_arv}")
-
+        st.success(f"Leitud vasteid: {len(df)}")
         for _, row in df.iterrows():
-            raw_name = str(row['species'])
-            formatted_name = format_species_name(raw_name)
-            
-            # Expanderi päises on nüüd ladina nimi kaldkirjas
-            with st.expander(formatted_name):
-                # Ka sisu päises on ladina nimi kaldkirjas
-                st.markdown(f"### {formatted_name}")
-                
-                col_text, col_img = st.columns([2, 1])
-                with col_text:
-                    st.write("**Eose kirjeldus:**")
-                    st.write(row.get('description', 'Kirjeldus puudub.'))
-                    st.divider()
-                    st.write(f"📐 **Polaartelg:** {row.get('P_mean', '-')} µm")
-                    st.write(f"📐 **Ekvatoriaaldiameeter:** {row.get('E_mean', '-')} µm")
-
-                with col_img:
-                    if 'image_url' in row and pd.notna(row['image_url']) and row['image_url'] != "":
-                        try:
-                            st.image(row['image_url'], use_container_width=True)
-                        except:
-                            st.caption("📸 Pilti ei leitud")
+            fname = format_name(row['species'])
+            with st.expander(fname):
+                st.markdown(f"### {fname}")
+                # gap="large" teeb paigutuse puhtamaks
+                t_col, i_col = st.columns([2, 1], gap="large")
+                with t_col:
+                    st.write("**Kirjeldus:**")
+                    st.write(row.get('description', 'Puudub.'))
+                    st.write(f"📐 **P:** {row.get('P_mean', '-')} µm | **E:** {row.get('E_mean', '-')} µm")
+                with i_col:
+                    if pd.notna(row.get('image_url')):
+                        st.image(row['image_url'], use_container_width=True)
 
 except Exception as e:
-    st.error(f"Viga rakenduse töös: {e}")
+    st.error(f"Viga: {e}")
