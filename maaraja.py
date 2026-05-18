@@ -83,6 +83,12 @@ def format_species_name(raw_name):
     return raw_str
 
 # --- 6. PÄIS JA VÄRVILISTE LIPPUDEGA KEELEVALIK ---
+# Roboti-lõks: Kirjutame unikaalse märksõna otse HTML-i, mida UptimeRobot tasuta paketiga näeb
+st.markdown(
+    '<p style="display:none; color:transparent;">Estonian Pteridophyte Spore Identifier Is Active</p>', 
+    unsafe_allow_html=True
+)
+
 col_logo, col_title, col_lang = st.columns([1, 8, 2], vertical_alignment="center")
 
 with col_logo:
@@ -95,7 +101,6 @@ with col_title:
     st.title(t["title"])
 
 with col_lang:
-    # Värviliste lippudega valik
     options_map = {"Eesti": "🇪🇪 Eesti", "English": "🇬🇧 English"}
     current_label = options_map.get(st.session_state.lang, "🇪🇪 Eesti")
     
